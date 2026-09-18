@@ -11,13 +11,52 @@
 </head>
 <body data-page="@yield('page', '')">
 
-    <div id="nav-mount"></div>
+@include('partials.navbar')
 
-    <main>
-        @yield('content')
-    </main>
+<main>
+    @if(session('success'))
+        <div class="toast success" style="position:fixed;top:20px;right:20px;z-index:999">
+            <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="toast error" style="position:fixed;top:20px;right:20px;z-index:999">
+            <i class="bi bi-x-circle-fill" style="color:var(--danger)"></i>
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
+    @if($errors->any())
+        <div class="toast error" style="position:fixed;top:20px;right:20px;z-index:999">
+            <i class="bi bi-exclamation-circle-fill" style="color:var(--danger)"></i>
+            <span>{{ $errors->first() }}</span>
+        </div>
+    @endif
 
-    <div id="footer-mount"></div>
+    @yield('content')
+</main>
 
+@include('partials.footer')
+
+<script>
+    // Toggle navbar mobile
+    document.addEventListener('DOMContentLoaded', () => {
+        const t = document.getElementById('navToggle');
+        if (t) {
+            t.addEventListener('click', () => {
+                document.getElementById('navLinks').classList.toggle('open');
+            });
+        }
+
+        // Auto-hide toast
+        document.querySelectorAll('.toast').forEach(el => {
+            setTimeout(() => {
+                el.style.transition = 'opacity .4s';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 400);
+            }, 4000);
+        });
+    });
+</script>
 </body>
 </html>
