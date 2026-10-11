@@ -27,10 +27,6 @@
         <button type="submit" class="btn btn-primary btn-block">
           <i class="bi bi-box-arrow-in-right"></i> Masuk
         </button>
-        <div class="hint" style="margin-top:14px;text-align:center;">
-          Demo user: <b>user@camrent.id</b> / user123<br>
-          Demo mitra: <b>mitra@camrent.id</b> / mitra123
-        </div>
       </form>
 
       {{-- REGISTER --}}
@@ -64,14 +60,28 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Fungsi untuk mengganti tab aktif
+    const switchTab = (tabName) => {
+        document.querySelectorAll('.login-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === tabName);
+        });
+        document.querySelectorAll('.login-form').forEach(f => {
+            f.classList.remove('active');
+        });
+        document.getElementById(tabName === 'login' ? 'loginForm' : 'registerForm').classList.add('active');
+    };
+
+    // Event listener untuk klik pada tab
     document.querySelectorAll('.login-tab').forEach(tab => {
         tab.addEventListener('click', () => {
-            document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(tab.dataset.tab === 'login' ? 'loginForm' : 'registerForm').classList.add('active');
+            switchTab(tab.dataset.tab);
         });
     });
+
+    // Cek apakah URL memiliki parameter/hash tertentu (misal: #register) agar langsung pindah ke halaman daftar
+    if (window.location.hash === '#register') {
+        switchTab('register');
+    }
 
     document.querySelectorAll('[data-role]').forEach(card => {
         card.addEventListener('click', () => {
