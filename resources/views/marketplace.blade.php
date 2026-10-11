@@ -57,7 +57,7 @@
   <div class="product-grid mp-grid" style="margin-top:22px;">
     @forelse($products as $p)
       <div class="product-card {{ $highlight == $p->id ? 'highlighted' : '' }}">
-        @include('partials.product-card', ['p' => $p])
+        @include('partials.product-card', ['p' => $p, 'buyOnPage' => true])
       </div>
     @empty
       <div class="empty-state" style="grid-column:1/-1;">
@@ -133,3 +133,30 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('buyForm');
+    const summary = document.getElementById('buySummary');
+
+    document.querySelectorAll('[data-buy-product]').forEach(button => {
+        button.addEventListener('click', () => {
+            form.action = button.dataset.buyUrl;
+            const name = document.createElement('b');
+            name.textContent = button.dataset.productName;
+            summary.replaceChildren(
+                name,
+                document.createTextNode(` — Rp ${button.dataset.productPrice}`)
+            );
+            document.getElementById('modalBuy').classList.add('open');
+        });
+    });
+
+    const requestedProduct = new URLSearchParams(window.location.search).get('buy');
+    const requestedButton = [...document.querySelectorAll('[data-buy-product]')]
+        .find(button => button.dataset.productId === requestedProduct);
+    requestedButton?.click();
+});
+</script>
+@endpush

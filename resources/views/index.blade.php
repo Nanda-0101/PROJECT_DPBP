@@ -29,7 +29,9 @@
           @php $img = \App\Helpers\ImageHelper::url($p->image); @endphp
           <div class="hero-mini-card">
             @if($img)
-              <img class="hero-mini-photo" src="{{ $img }}" alt="{{ $p->name }}">
+              <img class="hero-mini-photo" src="{{ $img }}" alt="{{ $p->name }}" loading="lazy"
+                   onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+              <i class="bi {{ $p->icon ?? 'bi-box-seam' }} hero-mini-fallback" hidden></i>
             @else
               <i class="bi {{ $p->icon ?? 'bi-box-seam' }}"></i>
             @endif

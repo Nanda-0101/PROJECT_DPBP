@@ -39,7 +39,11 @@ class Booking extends Model
     // ==== Helpers ====
     public static function generateCode(string $prefix = 'BKG'): string
     {
-        return $prefix . '-' . str_pad((string) random_int(1000, 9999), 4, '0', STR_PAD_LEFT);
+        do {
+            $code = $prefix . '-' . random_int(10000000, 99999999);
+        } while (static::where('code', $code)->exists());
+
+        return $code;
     }
 
     public function scopeForUser($q, int $userId)

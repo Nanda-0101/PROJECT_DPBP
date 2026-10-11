@@ -58,6 +58,6 @@ class Product extends Model
 
     public function scopeActive($q)
     {
-        return $q->where('status', 'Aktif');
+        return $q->where('status', 'Aktif')->where('stock', '>', 0);
     }
 }

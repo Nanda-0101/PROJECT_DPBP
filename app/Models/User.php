@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -16,6 +18,18 @@ class User extends Authenticatable
     ];
 
     protected $hidden = ['password'];
+
+    public static function createGuest(string $name, ?string $phone): self
+    {
+        return static::create([
+            'name' => $name,
+            'email' => 'guest+'.Str::uuid().'@camrent.invalid',
+            'password' => Hash::make(Str::random(64)),
+            'phone' => $phone,
+            'role' => 'user',
+            'status' => 'Aktif',
+        ]);
+    }
 
     // ==== Relations ====
     public function mitraProfile()

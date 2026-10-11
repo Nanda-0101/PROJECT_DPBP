@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Booking;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -68,10 +69,6 @@ class MarketplaceController extends Controller
     // ==== Beli produk ====
     public function buy(Request $request, Product $product)
     {
-        if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Masuk dulu untuk membeli.');
-        }
-
         $request->validate([
             'name'    => 'required|string|max:120',
             'phone'   => 'required|string|max:20',
@@ -79,14 +76,32 @@ class MarketplaceController extends Controller
             'payment' => 'required|in:Transfer,QRIS,Cash',
         ]);
 
-        if ($product->price_sale <= 0) {
-            return back()->with('error', 'Produk ini tidak dijual.');
+        if (Auth::id() && (int) Auth::id() === (int) $product->seller_id) {
+            return back()->with('error', 'Kamu tidak dapat membeli produk milik sendiri.');
         }
 
-        DB::transaction(function () use ($request, $product) {
+        $booking = DB::transaction(function () use ($request, $product) {
+            $product = Product::query()
+                ->whereKey($product->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($product->status !== 'Aktif' || $product->price_sale <= 0) {
+                return null;
+            }
+
+            if ($product->stock < 1) {
+                return null;
+            }
+
+            $userId = Auth::id();
+            if (!$userId) {
+                $userId = User::createGuest($request->name, $request->phone)->id;
+            }
+
             $booking = Booking::create([
                 'code'           => Booking::generateCode('ORD'),
-                'user_id'        => Auth::id(),
+                'user_id'        => $userId,
                 'type'           => 'Pembelian',
                 'start_date'     => now()->toDateString(),
                 'end_date'       => now()->toDateString(),
@@ -108,10 +123,29 @@ class MarketplaceController extends Controller
                 'qty'               => 1,
                 'subtotal'          => $product->price_sale,
             ]);
+
+            $product->decrement('stock');
+            if ((int) $product->stock === 0) {
+                $product->update(['status' => 'Habis']);
+            }
+
+            return $booking;
         });
 
-        return redirect()->route('dashboard')
-            ->with('success', 'Pembelian berhasil dibuat! Cek status di Dashboard.');
+        if (!$booking) {
+            return back()->with('error', 'Stok produk ini sudah habis atau tidak lagi tersedia.');
+        }
+
+        if (!Auth::check()) {
+            $guestUserIds = session('guest_user_ids', []);
+            $guestUserIds[] = $booking->user_id;
+            session(['guest_user_ids' => array_values(array_unique($guestUserIds))]);
+        }
+
+        $destination = Auth::check() ? 'dashboard' : 'marketplace';
+
+        return redirect()->route($destination)
+            ->with('success', "Pembelian {$booking->code} berhasil dibuat!");
     }
 
     // ==== Jual barang (user listing) ====

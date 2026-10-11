@@ -21,7 +21,7 @@
       <div class="glass card bk-step">
         <div class="bk-step-title"><span class="bk-num">1</span> Pilih alat</div>
         <select id="productSelect" name="product_id" class="input">
-          @foreach($products as $p)
+          @forelse($products as $p)
             <option value="{{ $p->id }}"
                     data-price-day="{{ $p->price_per_day }}"
                     data-price-half="{{ $p->price_per_half_day }}"
@@ -31,7 +31,9 @@
                     @selected($selected == $p->id)>
               {{ $p->name }} — Rp {{ number_format($p->price_per_day,0,',','.') }}/hari
             </option>
-          @endforeach
+          @empty
+            <option value="">Belum ada alat sewa yang tersedia</option>
+          @endforelse
         </select>
         <div id="productPreview" class="bk-product-preview"></div>
       </div>
@@ -132,7 +134,7 @@
         <div id="summaryBody">
           <div class="sum-empty">Pilih alat & tanggal untuk melihat ringkasan.</div>
         </div>
-        <button type="submit" class="btn btn-primary btn-block" style="margin-top:16px;">
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:16px;" @disabled($products->isEmpty())>
           <i class="bi bi-check2-circle"></i> Konfirmasi Booking
         </button>
         <div class="hint" style="margin-top:10px;text-align:center;">
@@ -156,12 +158,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const $start = document.getElementById('startDateInput');
     const $end   = document.getElementById('endDateInput');
 
-    function dateKey(d) { return d.toISOString().slice(0,10); }
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[char]));
+    }
+
+    function dateKey(d) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    function parseDateKey(value) {
+        const [year, month, day] = value.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    }
     function sameDay(a,b){ return a && b && dateKey(a) === dateKey(b); }
     function formatDateID(d){ return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}); }
 
     function currentProduct() {
         const opt = sel.options[sel.selectedIndex];
+        if (!opt || !opt.value) return null;
         return {
             id: sel.value,
             name: opt.dataset.name,
@@ -175,11 +193,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPreview() {
         const p = currentProduct();
         const box = document.getElementById('productPreview');
+        if (!p) {
+            box.textContent = 'Belum ada alat sewa yang tersedia.';
+            return;
+        }
         box.innerHTML = `
             <div class="bpp-icon"><i class="bi bi-camera"></i></div>
             <div>
-                <div style="font-weight:800;">${p.name}</div>
-                <div class="hint">${p.category} · Stok: ${p.stock}</div>
+                <div style="font-weight:800;">${escapeHtml(p.name)}</div>
+                <div class="hint">${escapeHtml(p.category)} · Stok: ${escapeHtml(p.stock)}</div>
             </div>
             <div class="bpp-price">
                 <div>Rp ${p.priceHalf.toLocaleString('id-ID')} <span class="hint">/12 jam</span></div>
@@ -209,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         grid.innerHTML = html;
         grid.querySelectorAll('.cal-cell:not(.blank):not(.disabled)').forEach(cell => {
-            cell.addEventListener('click', () => pickDate(new Date(cell.dataset.date)));
+            cell.addEventListener('click', () => pickDate(parseDateKey(cell.dataset.date)));
         });
     }
 
@@ -235,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function computePrice() {
-        if (!startDate) return null;
+        if (!startDate || !currentProduct()) return null;
         const p = currentProduct();
         const end = endDate || startDate;
         const durType = document.querySelector('input[name="duration_type"]:checked').value;
@@ -261,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const payNow = payType === 'DP' ? price.dp : price.subtotal;
 
         body.innerHTML = `
-            <div class="sum-row"><span>Alat</span><span>${p.name}</span></div>
+            <div class="sum-row"><span>Alat</span><span>${escapeHtml(p.name)}</span></div>
             <div class="sum-row"><span>Durasi</span><span>${price.duration}</span></div>
             <div class="sum-row"><span>Tanggal</span><span>${formatDateID(startDate)}${!sameDay(startDate, price.end) ? ' – '+formatDateID(price.end) : ''}</span></div>
             <div class="sum-row"><span>Skema</span><span>${payType}</span></div>

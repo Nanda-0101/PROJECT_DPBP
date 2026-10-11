@@ -6,10 +6,16 @@
 @section('content')
 <section class="app-container dash-wrap">
   <div class="dash-head glass card">
-    <div class="dash-avatar">{{ strtoupper(substr($user->name, 0, 2)) }}</div>
+    <div class="dash-avatar">{{ $user ? strtoupper(substr($user->name, 0, 2)) : 'T' }}</div>
     <div style="flex:1;">
-      <h2 style="font-size:1.4rem;">{{ $user->name }}</h2>
-      <div class="hint">{{ $isMitra ? 'Akun Mitra / Penyedia Alat' : 'Akun Pengguna' }}</div>
+      <h2 style="font-size:1.4rem;">{{ $user?->name ?? 'Aktivitas Tamu' }}</h2>
+      <div class="hint">
+        @if($user)
+          {{ $isMitra ? 'Akun Mitra / Penyedia Alat' : 'Akun Pengguna' }}
+        @else
+          Pesanan yang dibuat dari browser ini. Masuk atau daftar untuk menyimpan riwayat ke akun.
+        @endif
+      </div>
     </div>
     @if($isMitra)
       <span class="status-pill status-{{ strtolower(str_replace(' ', '-', $user->status)) }}">{{ $user->status }}</span>
@@ -21,7 +27,9 @@
     @if($isMitra)
       <div class="dash-tab" data-tab="toko"><i class="bi bi-shop"></i> Toko Saya</div>
     @endif
-    <div class="dash-tab" data-tab="profil"><i class="bi bi-person"></i> Profil</div>
+    @if($user)
+      <div class="dash-tab" data-tab="profil"><i class="bi bi-person"></i> Profil</div>
+    @endif
   </div>
 
   {{-- RIWAYAT --}}
@@ -56,6 +64,7 @@
         <i class="bi bi-inbox"></i>
         <p>Belum ada riwayat sewa atau pembelian.</p>
         <a href="{{ route('booking') }}" class="btn btn-primary" style="margin-top:10px;">Booking sekarang</a>
+        <a href="{{ route('marketplace') }}" class="btn btn-secondary" style="margin-top:10px;">Lihat Marketplace</a>
       </div>
     @endforelse
   </div>
@@ -72,7 +81,7 @@
           <div class="order-icon"><i class="bi bi-person-check"></i></div>
           <div class="order-info">
             <div class="oi-title">{{ $item->product_name_snap }} <span class="hint">· {{ $b->code }}</span></div>
-            <div class="oi-meta">Penyewa: {{ $b->user->name ?? '-' }} · {{ $b->start_date->format('d M Y') }}</div>
+            <div class="oi-meta">Penyewa: {{ $b->user->name ?? '-' }} · {{ $b->user->phone ?? '-' }} · {{ $b->start_date->format('d M Y') }}</div>
           </div>
           <div class="order-price">
             Rp {{ number_format($b->total_amount, 0, ',', '.') }}
@@ -107,12 +116,7 @@
       <div class="dash-product-grid">
         @forelse($myProducts as $p)
           <div class="product-card">
-            @php $img = \App\Helpers\ImageHelper::url($p->image); @endphp
-            @if($img)
-              <img class="pc-photo" src="{{ $img }}" alt="{{ $p->name }}">
-            @else
-              <div class="pc-icon"><i class="bi {{ $p->icon ?? 'bi-box-seam' }}"></i></div>
-            @endif
+            @include('partials.product-image', ['p' => $p])
             <div class="pc-name">{{ $p->name }}</div>
             <div class="hint">{{ $p->category->name ?? '-' }} · Stok {{ $p->stock }}</div>
             <div class="pc-price-row">
@@ -127,7 +131,8 @@
   @endif
 
   {{-- PROFIL --}}
-  <div class="dash-panel" id="panelProfil" style="display:none;">
+  @if($user)
+    <div class="dash-panel" id="panelProfil" style="display:none;">
     <div class="glass card" style="max-width:520px;padding:24px;">
       <h3 style="font-size:1.1rem;margin-bottom:16px;"><i class="bi bi-person-badge gradient-text"></i> Info Akun</h3>
       <div class="profil-row"><span>Nama</span><span>{{ $user->name }}</span></div>
@@ -138,7 +143,8 @@
         <div class="profil-row">
           <span>Status verifikasi</span>
           <span class="status-pill status-{{ strtolower(str_replace(' ', '-', $user->status)) }}">{{ $user->status }}</span>
-        </div>
+          </div>
+        @endif
       @endif
     </div>
   </div>

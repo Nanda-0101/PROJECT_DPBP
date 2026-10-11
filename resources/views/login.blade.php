@@ -83,9 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
         switchTab('register');
     }
 
-    document.querySelectorAll('[data-role]').forEach(card => {
+    document.querySelectorAll('.radio-card').forEach(card => {
         card.addEventListener('click', () => {
-            document.querySelectorAll('[data-role]').forEach(c => c.classList.remove('selected'));
+            card.parentElement.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
         });
     });

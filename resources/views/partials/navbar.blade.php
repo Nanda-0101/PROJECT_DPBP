@@ -13,8 +13,24 @@
     </div>
     <div class="nav-actions">
       @auth
+        @php
+          $navAvatar = \App\Helpers\ImageHelper::url(auth()->user()->avatar);
+          $navInitials = collect(explode(' ', trim(auth()->user()->name)))
+              ->filter()
+              ->take(2)
+              ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
+              ->implode('');
+        @endphp
         <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-sm">
           <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a href="{{ route('account.settings') }}" class="nav-profile" aria-label="Pengaturan akun" title="Pengaturan akun">
+          @if($navAvatar)
+            <img src="{{ $navAvatar }}" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+            <span hidden>{{ $navInitials }}</span>
+          @else
+            <span>{{ $navInitials }}</span>
+          @endif
         </a>
         <form method="POST" action="{{ route('logout') }}" style="display:inline">
           @csrf

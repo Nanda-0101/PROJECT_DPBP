@@ -12,12 +12,30 @@ class ImageHelper
      */
     public static function url(?string $path): ?string
     {
-        if (empty($path)) return null;
+        if (empty($path)) {
+            return null;
+        }
 
         if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
             return $path;
         }
 
-        return asset('storage/' . ltrim($path, '/'));
+        $path = ltrim(str_replace('\\', '/', $path), '/');
+
+        foreach (['products' => 'media.product-image', 'avatars' => 'media.account-avatar'] as $directory => $routeName) {
+            if (!str_starts_with($path, $directory.'/')) {
+                continue;
+            }
+
+            $filename = substr($path, strlen($directory.'/'));
+
+            if (basename($filename) !== $filename || $filename === '') {
+                return null;
+            }
+
+            return route($routeName, ['filename' => $filename]);
+        }
+
+        return asset('storage/'.$path);
     }
 }

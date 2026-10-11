@@ -23,12 +23,15 @@
       <p style="margin-bottom:18px;">Isi data berikut, verifikasi dalam 1x24 jam.</p>
       <form method="POST" action="{{ route('mitra.store') }}" enctype="multipart/form-data">
         @csrf
-        <div class="field"><label>Nama usaha / brand rental</label><input required name="nama" class="input" placeholder="Contoh: Alpha Rental Studio"></div>
+        <div class="field"><label>Nama akun / usaha</label><input required name="nama" class="input" value="{{ old('nama', auth()->user()->name ?? '') }}" placeholder="Contoh: Alpha Rental Studio"></div>
         <div style="display:flex;gap:12px;">
           <div class="field" style="flex:1;"><label>Nama pemilik</label><input required name="pemilik" class="input"></div>
-          <div class="field" style="flex:1;"><label>No. HP / WhatsApp</label><input required name="phone" class="input"></div>
+          <div class="field" style="flex:1;"><label>No. HP / WhatsApp</label><input {{ auth()->check() ? 'readonly' : 'required' }} name="phone" class="input" value="{{ old('phone', auth()->user()->phone ?? '') }}"></div>
         </div>
-        <div class="field"><label>Email</label><input required type="email" name="email" class="input"></div>
+        <div class="field"><label>Email</label><input {{ auth()->check() ? 'readonly' : 'required' }} type="email" name="email" class="input" value="{{ old('email', auth()->user()->email ?? '') }}"></div>
+        @guest
+          <div class="field"><label>Kata sandi akun</label><input required type="password" name="password" minlength="6" class="input" placeholder="Minimal 6 karakter"></div>
+        @endguest
         <div class="field"><label>NIK KTP</label><input required maxlength="16" name="nik" class="input" placeholder="16 digit NIK"></div>
         <div class="field"><label>Kategori alat</label>
           <select name="kategori" class="input">

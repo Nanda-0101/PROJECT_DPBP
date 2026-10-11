@@ -1,12 +1,5 @@
 <div class="product-card">
-  {{-- Gunakan ImageHelper untuk mendapatkan URL gambar yang valid --}}
-  @php $img = \App\Helpers\ImageHelper::url($p->image); @endphp
-  
-  @if($img)
-    <img class="pc-photo" src="{{ $img }}" alt="{{ $p->name }}">
-  @else
-    <div class="pc-icon"><i class="bi {{ $p->icon ?? 'bi-box-seam' }}"></i></div>
-  @endif
+  @include('partials.product-image', ['p' => $p])
 
   <div class="pc-name">{{ $p->name }}</div>
 
@@ -45,12 +38,20 @@
       </a>
     @endif
     @if($p->price_sale > 0)
-      <button type="button" class="btn btn-secondary btn-sm"
-              onclick="document.getElementById('buyProductId').value='{{ $p->id }}';
-                       document.getElementById('buySummary').innerHTML='<b>{{ $p->name }}</b> — Rp {{ number_format($p->price_sale,0,',','.') }}';
-                       document.getElementById('modalBuy').classList.add('open');">
-        <i class="bi bi-cart"></i> Beli
-      </button>
+      @if($buyOnPage ?? false)
+        <button type="button" class="btn btn-secondary btn-sm"
+                data-buy-url="{{ route('marketplace.buy', $p->id) }}"
+                data-product-id="{{ $p->id }}"
+                data-product-name="{{ $p->name }}"
+                data-product-price="{{ number_format($p->price_sale, 0, ',', '.') }}"
+                data-buy-product>
+          <i class="bi bi-cart"></i> Beli
+        </button>
+      @else
+        <a href="{{ route('marketplace', ['buy' => $p->id]) }}" class="btn btn-secondary btn-sm">
+          <i class="bi bi-cart"></i> Beli
+        </a>
+      @endif
     @endif
   </div>
 </div>
