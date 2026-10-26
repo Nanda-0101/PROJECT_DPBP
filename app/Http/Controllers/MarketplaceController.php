@@ -17,11 +17,19 @@ class MarketplaceController extends Controller
     {
         $q         = $request->get('q', '');
         $category  = $request->get('category', '');
-        $type      = $request->get('type', '');
         $sort      = $request->get('sort', 'trending');
+        $source    = in_array($request->get('source'), ['mitra', 'camrent'], true)
+            ? $request->get('source')
+            : '';
         $highlight = $request->get('highlight');
 
         $query = Product::active()->with(['category', 'seller']);
+
+        if ($source === 'mitra') {
+            $query->whereHas('seller', fn($seller) => $seller->where('role', 'mitra'));
+        } elseif ($source === 'camrent') {
+            $query->whereNull('seller_id');
+        }
 
         if ($q) {
             $query->where(function ($w) use ($q) {
@@ -35,9 +43,6 @@ class MarketplaceController extends Controller
             $query->whereHas('category', fn($c) => $c->where('name', $category));
         }
         
-        if ($type === 'sewa') $query->rentable();
-        if ($type === 'jual') $query->sellable();
-
         switch ($sort) {
             case 'price-asc':  
                 $query->orderByRaw('COALESCE(NULLIF(price_per_day,0), price_sale) asc'); 
@@ -56,14 +61,31 @@ class MarketplaceController extends Controller
         $categories = Category::orderBy('sort_order')->get();
 
         return view('marketplace', compact(
-            'products', 'categories', 'q', 'category', 'type', 'sort', 'highlight'
+            'products', 'categories', 'q', 'category', 'sort', 'source', 'highlight'
         ));
     }
 
     public function show(Product $product)
     {
-        $product->load(['category', 'seller', 'specs']);
-        return response()->json($product);
+        $product = Product::active()
+            ->with(['category:id,name', 'seller:id,name', 'specs:id,product_id,spec_text'])
+            ->findOrFail($product->id);
+
+        return response()->json([
+            'id' => $product->id,
+            'name' => $product->name,
+            'brand' => $product->brand,
+            'image' => \App\Helpers\ImageHelper::url($product->image),
+            'description' => $product->description,
+            'price_per_half_day' => $product->price_per_half_day,
+            'price_per_day' => $product->price_per_day,
+            'price_sale' => $product->price_sale,
+            'stock' => $product->stock,
+            'rating' => $product->rating,
+            'category' => $product->category?->name,
+            'seller' => $product->seller?->name ?? 'CamRent (Vendor)',
+            'specs' => $product->specs->pluck('spec_text'),
+        ]);
     }
 
     // ==== Beli produk ====

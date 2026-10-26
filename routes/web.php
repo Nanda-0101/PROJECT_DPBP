@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 // ==== Public ====
 Route::get('/',            [HomeController::class, 'index'])->name('home');
 Route::get('/marketplace', [MarketplaceController::class, 'index'])->name('marketplace');
+Route::get('/marketplace/products/{product}', [MarketplaceController::class, 'show'])
+    ->name('marketplace.product.show');
 Route::get('/media/products/{filename}', [ProductImageController::class, 'show'])
     ->where('filename', '[A-Za-z0-9._-]+')
     ->name('media.product-image');

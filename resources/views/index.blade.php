@@ -17,7 +17,6 @@
       <div class="hero-stats">
         <div class="stat"><b>{{ $stats['products'] }}+</b><span>alat tersedia</span></div>
         <div class="stat"><b>{{ $stats['creators'] }}+</b><span>kreator aktif</span></div>
-        <div class="stat"><b>⭐ {{ $stats['rating'] }}</b><span>rating rata-rata</span></div>
       </div>
     </div>
     <div class="hero-visual glass">

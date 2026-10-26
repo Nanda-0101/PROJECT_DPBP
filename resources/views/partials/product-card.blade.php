@@ -1,7 +1,18 @@
 <div class="product-card">
-  @include('partials.product-image', ['p' => $p])
-
-  <div class="pc-name">{{ $p->name }}</div>
+  @if($buyOnPage ?? false)
+    <button type="button" class="pc-detail-trigger" data-product-detail
+            data-detail-url="{{ route('marketplace.product.show', $p) }}"
+            aria-label="Lihat specsheet {{ $p->name }}">
+      @include('partials.product-image', ['p' => $p])
+    </button>
+    <button type="button" class="pc-name pc-detail-trigger" data-product-detail
+            data-detail-url="{{ route('marketplace.product.show', $p) }}">
+      {{ $p->name }}
+    </button>
+  @else
+    @include('partials.product-image', ['p' => $p])
+    <div class="pc-name">{{ $p->name }}</div>
+  @endif
 
   <div class="pc-meta">
     <span>{{ $p->category->name ?? '-' }}</span>
@@ -14,7 +25,7 @@
 
   <div class="pc-seller">
     <i class="bi bi-shop-window"></i>
-    {{ $p->seller->name ?? 'Kamu' }}
+    {{ $p->seller->name ?? 'CamRent (Vendor)' }}
   </div>
 
   <div class="pc-price-row">
@@ -32,6 +43,12 @@
   </div>
 
   <div class="pc-actions">
+    @if($buyOnPage ?? false)
+      <button type="button" class="btn btn-secondary btn-sm" data-product-detail
+              data-detail-url="{{ route('marketplace.product.show', $p) }}">
+        <i class="bi bi-card-list"></i> Specsheet
+      </button>
+    @endif
     @if($p->price_per_day > 0)
       <a href="{{ route('booking', ['product' => $p->id]) }}" class="btn btn-primary btn-sm">
         <i class="bi bi-calendar-plus"></i> Booking

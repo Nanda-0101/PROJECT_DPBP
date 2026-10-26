@@ -24,10 +24,10 @@
         <option value="{{ $c->name }}" @selected($category === $c->name)>{{ $c->name }}</option>
       @endforeach
     </select>
-    <select name="type" class="input mp-select" onchange="this.form.submit()">
-      <option value="">Sewa & Jual</option>
-      <option value="sewa" @selected($type === 'sewa')>Khusus disewa</option>
-      <option value="jual" @selected($type === 'jual')>Khusus dijual</option>
+    <select name="source" class="input mp-select" onchange="this.form.submit()">
+      <option value="">Semua</option>
+      <option value="mitra" @selected($source === 'mitra')>Mitra</option>
+      <option value="camrent" @selected($source === 'camrent')>CamRent</option>
     </select>
     <select name="sort" class="input mp-select" onchange="this.form.submit()">
       <option value="trending"   @selected($sort === 'trending')>Urutkan: Trending</option>
@@ -67,6 +67,19 @@
     @endforelse
   </div>
 </section>
+
+{{-- MODAL: Specsheet produk --}}
+<div class="modal-backdrop" id="modalProductDetail" role="presentation">
+  <section class="modal-box glass-strong product-detail-modal" role="dialog"
+           aria-modal="true" aria-label="Specsheet produk">
+    <button type="button" class="modal-close" data-detail-close aria-label="Tutup specsheet">
+      <i class="bi bi-x-lg"></i>
+    </button>
+    <div id="productDetailContent" aria-live="polite">
+      <p class="hint">Memuat specsheet...</p>
+    </div>
+  </section>
+</div>
 
 {{-- MODAL: Konfirmasi Beli --}}
 <div class="modal-backdrop" id="modalBuy">
@@ -137,6 +150,115 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const detailModal = document.getElementById('modalProductDetail');
+    const detailContent = document.getElementById('productDetailContent');
+
+    const addDetailText = (container, label, value) => {
+        if (value === null || value === undefined || value === '') return;
+        const row = document.createElement('div');
+        row.className = 'product-detail-row';
+        const title = document.createElement('b');
+        title.textContent = label;
+        const text = document.createElement('span');
+        text.textContent = value;
+        row.append(title, text);
+        container.append(row);
+    };
+
+    const showProductDetail = async (url) => {
+        detailModal.classList.add('open');
+        detailContent.replaceChildren();
+        const loading = document.createElement('p');
+        loading.className = 'hint';
+        loading.textContent = 'Memuat specsheet...';
+        detailContent.append(loading);
+
+        try {
+            const response = await fetch(url, { headers: { Accept: 'application/json' } });
+            if (!response.ok) throw new Error(`Gagal memuat specsheet (${response.status}).`);
+            const product = await response.json();
+            detailContent.replaceChildren();
+
+            const heading = document.createElement('h3');
+            heading.id = 'productDetailTitle';
+            heading.textContent = product.name;
+            detailContent.append(heading);
+
+            if (product.image) {
+                const image = document.createElement('img');
+                image.className = 'detail-photo';
+                image.src = product.image;
+                image.alt = product.name;
+                detailContent.append(image);
+            }
+
+            addDetailText(detailContent, 'Merek', product.brand);
+            addDetailText(detailContent, 'Kategori', product.category);
+            addDetailText(detailContent, 'Pemilik', product.seller);
+            addDetailText(detailContent, 'Rating', product.rating ? `${product.rating} / 5` : null);
+            addDetailText(detailContent, 'Deskripsi', product.description);
+            addDetailText(detailContent, 'Stok tersedia', product.stock);
+
+            const prices = document.createElement('div');
+            prices.className = 'detail-price-box';
+            [
+                ['Sewa / hari', product.price_per_day],
+                ['Sewa / 12 jam', product.price_per_half_day],
+                ['Harga jual', product.price_sale],
+            ].forEach(([label, price]) => {
+                if (!price || price <= 0) return;
+                const item = document.createElement('div');
+                item.className = 'dp-item';
+                const title = document.createElement('span');
+                title.textContent = label;
+                const amount = document.createElement('b');
+                amount.textContent = `Rp ${Number(price).toLocaleString('id-ID')}`;
+                item.append(title, amount);
+                prices.append(item);
+            });
+            if (prices.childElementCount) detailContent.append(prices);
+
+            const specsHeading = document.createElement('h4');
+            specsHeading.textContent = 'Spesifikasi';
+            detailContent.append(specsHeading);
+            if (product.specs?.length) {
+                const specs = document.createElement('ul');
+                specs.className = 'product-spec-list';
+                product.specs.forEach(spec => {
+                    const item = document.createElement('li');
+                    item.textContent = spec;
+                    specs.append(item);
+                });
+                detailContent.append(specs);
+            } else {
+                const empty = document.createElement('p');
+                empty.className = 'hint';
+                empty.textContent = 'Spesifikasi belum tersedia.';
+                detailContent.append(empty);
+            }
+        } catch (error) {
+            detailContent.replaceChildren();
+            const message = document.createElement('p');
+            message.className = 'hint';
+            message.textContent = error.message || 'Specsheet tidak dapat dimuat. Silakan coba lagi.';
+            detailContent.append(message);
+        }
+    };
+
+    document.querySelectorAll('[data-product-detail]').forEach(button => {
+        button.addEventListener('click', () => showProductDetail(button.dataset.detailUrl));
+    });
+
+    detailModal.querySelectorAll('[data-detail-close]').forEach(button => {
+        button.addEventListener('click', () => detailModal.classList.remove('open'));
+    });
+    detailModal.addEventListener('click', event => {
+        if (event.target === detailModal) detailModal.classList.remove('open');
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') detailModal.classList.remove('open');
+    });
+
     const form = document.getElementById('buyForm');
     const summary = document.getElementById('buySummary');
 
