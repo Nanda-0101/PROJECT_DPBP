@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
 @section('page', 'booking')
-@section('title', 'Booking Kamera · CamRent')
+@section('title', 'Checkout Sewa · CamRent')
 
 @section('content')
 <header class="section" style="padding-bottom:10px;">
   <div class="app-container">
-    <span class="eyebrow badge badge-rent"><i class="bi bi-calendar-check"></i> Booking</span>
-    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Booking peralatan sewa</h1>
-    <p style="max-width:600px;">Pilih alat, tentukan tanggal lewat kalender, dan selesaikan pembayaran dalam beberapa langkah.</p>
+    <span class="eyebrow badge badge-rent"><i class="bi bi-calendar-check"></i> Checkout</span>
+    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Checkout peralatan sewa</h1>
+    <p style="max-width:600px;">Periksa alat yang disewa, tentukan tanggal lewat kalender, dan selesaikan pembayaran dalam beberapa langkah.</p>
   </div>
 </header>
 
@@ -19,24 +19,28 @@
 
       {{-- Step 1 --}}
       <div class="glass card bk-step">
-        <div class="bk-step-title"><span class="bk-num">1</span> Pilih alat</div>
-        <select id="productSelect" name="product_id" class="input">
-          @forelse($products as $p)
-            <option value="{{ $p->id }}"
-                    data-price-day="{{ $p->price_per_day }}"
-                    data-price-half="{{ $p->price_per_half_day }}"
-                    data-name="{{ $p->name }}"
-                    data-category="{{ $p->category->name ?? '-' }}"
-                    data-stock="{{ $p->stock }}"
-                    @selected($selected == $p->id)>
-              {{ $p->name }} — Rp {{ number_format($p->price_per_day,0,',','.') }}/hari
-            </option>
-          @empty
-            <option value="">Belum ada alat sewa yang tersedia</option>
-          @endforelse
-        </select>
-        <div id="productPreview" class="bk-product-preview"></div>
+        <div class="bk-step-title" style="justify-content:space-between;">
+          <span style="display:flex;align-items:center;gap:10px;"><span class="bk-num">1</span> Alat yang disewa</span>
+          <a href="{{ route('cart.index') }}" class="link-more" style="font-size:.85rem;"><i class="bi bi-pencil-square"></i> Ubah di keranjang</a>
+        </div>
+        <div id="checkoutItems"></div>
+        @error('selected')<div class="hint" style="color:var(--danger);">{{ $message }}</div>@enderror
       </div>
+
+      {{-- Rekomendasi --}}
+      @if($recommendations->isNotEmpty())
+        <div class="glass card bk-step" id="recBlock">
+          <div class="bk-step-title" style="margin-bottom:6px;"><i class="bi bi-stars gradient-text"></i> Rekomendasi untuk kamu</div>
+          <div class="hint" style="margin:0 0 12px;">Berdasarkan kategori yang paling sering kamu sewa, lihat, dan isi keranjangmu.</div>
+          <div class="rec-scroll">
+            @foreach($recommendations as $p)
+              <div class="rec-item" data-rec-id="{{ $p->id }}">
+                @include('partials.rec-card', ['p' => $p, 'ajax' => true, 'from' => 'checkout'])
+              </div>
+            @endforeach
+          </div>
+        </div>
+      @endif
 
       {{-- Step 2 --}}
       <div class="glass card bk-step">
@@ -110,19 +114,23 @@
             </label>
           </div>
         </div>
-        <div class="field">
+        <div class="field" style="margin-bottom:0;">
           <label>Metode pembayaran</label>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <label class="radio-card selected" style="flex:1;min-width:110px;">
-              <input type="radio" name="payment_method" value="Cash" checked> <i class="bi bi-cash-coin"></i> Cash
-            </label>
-            <label class="radio-card" style="flex:1;min-width:110px;">
-              <input type="radio" name="payment_method" value="Transfer"> <i class="bi bi-bank"></i> Transfer
-            </label>
-            <label class="radio-card" style="flex:1;min-width:110px;">
-              <input type="radio" name="payment_method" value="QRIS"> <i class="bi bi-qr-code"></i> QRIS
-            </label>
-          </div>
+          @php $selectedMethod = old('payment_method', 'Cash'); @endphp
+          @foreach($paymentGroups as $group)
+            <div class="pay-group">
+              <div class="pay-group-title">{{ $group['label'] }} <span class="hint">· {{ $group['hint'] }}</span></div>
+              <div class="pay-grid">
+                @foreach($group['methods'] as $method)
+                  <label class="radio-card {{ $selectedMethod === $method['key'] ? 'selected' : '' }}">
+                    <input type="radio" name="payment_method" value="{{ $method['key'] }}" @checked($selectedMethod === $method['key'])>
+                    <i class="bi {{ $method['icon'] }}"></i> {{ $method['label'] }}
+                  </label>
+                @endforeach
+              </div>
+            </div>
+          @endforeach
+          <div class="payment-info-box" id="paymentInfo"></div>
         </div>
       </div>
     </div>
@@ -130,12 +138,12 @@
     {{-- Ringkasan --}}
     <aside class="booking-side">
       <div class="glass card summary-card">
-        <h4 style="margin-bottom:14px;"><i class="bi bi-receipt gradient-text"></i> Ringkasan Booking</h4>
+        <h4 style="margin-bottom:14px;"><i class="bi bi-receipt gradient-text"></i> Ringkasan Sewa</h4>
         <div id="summaryBody">
-          <div class="sum-empty">Pilih alat & tanggal untuk melihat ringkasan.</div>
+          <div class="sum-empty">Pilih tanggal sewa untuk melihat ringkasan.</div>
         </div>
-        <button type="submit" class="btn btn-primary btn-block" style="margin-top:16px;" @disabled($products->isEmpty())>
-          <i class="bi bi-check2-circle"></i> Konfirmasi Booking
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:16px;" id="submitBooking">
+          <i class="bi bi-check2-circle"></i> Konfirmasi Sewa
         </button>
         <div class="hint" style="margin-top:10px;text-align:center;">
           <i class="bi bi-headset"></i> Salah pilih?
@@ -151,12 +159,17 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    const sel       = document.getElementById('productSelect');
     const calDate   = new Date();
     let startDate = null, endDate = null;
 
+    const PAYMENT_METHODS = @json($paymentMethods);
+    const INITIAL_ITEMS   = @json($initialItems);
+    const OLD = @json(['start' => old('start_date'), 'end' => old('end_date')]);
+
     const $start = document.getElementById('startDateInput');
     const $end   = document.getElementById('endDateInput');
+    const $items = document.getElementById('checkoutItems');
+    const rupiah = value => 'Rp ' + Number(value).toLocaleString('id-ID');
 
     function escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, char => ({
@@ -177,38 +190,55 @@ document.addEventListener('DOMContentLoaded', () => {
     function sameDay(a,b){ return a && b && dateKey(a) === dateKey(b); }
     function formatDateID(d){ return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}); }
 
-    function currentProduct() {
-        const opt = sel.options[sel.selectedIndex];
-        if (!opt || !opt.value) return null;
-        return {
-            id: sel.value,
-            name: opt.dataset.name,
-            category: opt.dataset.category,
-            stock: opt.dataset.stock,
-            priceDay: +opt.dataset.priceDay,
-            priceHalf: +opt.dataset.priceHalf,
-        };
-    }
+    // ===== Daftar alat (sumber data: DOM #checkoutItems) =====
+    function addItemRow(item) {
+        const row = document.createElement('div');
+        row.className = 'co-item';
+        row.dataset.checkoutItem = '';
+        row.dataset.id = item.id;
+        row.dataset.priceDay = item.price_day;
+        row.dataset.priceHalf = item.price_half;
+        row.dataset.qty = item.qty;
+        row.dataset.name = item.name;
 
-    function renderPreview() {
-        const p = currentProduct();
-        const box = document.getElementById('productPreview');
-        if (!p) {
-            box.textContent = 'Belum ada alat sewa yang tersedia.';
-            return;
+        const thumb = document.createElement(item.image ? 'img' : 'div');
+        thumb.className = 'co-thumb';
+        if (item.image) {
+            thumb.src = item.image;
+            thumb.alt = item.name;
+        } else {
+            thumb.classList.add('co-thumb-icon');
+            thumb.innerHTML = `<i class="bi ${escapeHtml(item.icon || 'bi-box-seam')}"></i>`;
         }
-        box.innerHTML = `
-            <div class="bpp-icon"><i class="bi bi-camera"></i></div>
-            <div>
-                <div style="font-weight:800;">${escapeHtml(p.name)}</div>
-                <div class="hint">${escapeHtml(p.category)} · Stok: ${escapeHtml(p.stock)}</div>
-            </div>
-            <div class="bpp-price">
-                <div>Rp ${p.priceHalf.toLocaleString('id-ID')} <span class="hint">/12 jam</span></div>
-                <div>Rp ${p.priceDay.toLocaleString('id-ID')} <span class="hint">/hari</span></div>
-            </div>`;
+
+        const info = document.createElement('div');
+        info.className = 'co-info';
+        info.innerHTML = `
+            <div class="co-name">${escapeHtml(item.name)}</div>
+            <div class="hint">${escapeHtml(item.category)} · ${rupiah(item.price_day)}/hari</div>`;
+
+        const qty = document.createElement('span');
+        qty.className = 'co-qty';
+        qty.textContent = `×${item.qty}`;
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'selected[]';
+        input.value = item.id;
+
+        row.append(thumb, info, qty, input);
+        $items.append(row);
     }
 
+    const itemRows = () => [...$items.querySelectorAll('[data-checkout-item]')].map(row => ({
+        id: row.dataset.id,
+        name: row.dataset.name,
+        qty: +row.dataset.qty,
+        priceDay: +row.dataset.priceDay,
+        priceHalf: +row.dataset.priceHalf,
+    }));
+
+    // ===== Kalender =====
     function renderCalendar() {
         const y = calDate.getFullYear(), m = calDate.getMonth();
         document.getElementById('calMonthLabel').textContent = `${monthNames[m]} ${y}`;
@@ -256,44 +286,82 @@ document.addEventListener('DOMContentLoaded', () => {
         box.innerHTML = `Sewa: <b>${formatDateID(startDate)}</b> s/d <b>${formatDateID(endDate)}</b>`;
     }
 
+    // ===== Harga: sama dengan perhitungan server (BookingController::priceFor) =====
     function computePrice() {
-        if (!startDate || !currentProduct()) return null;
-        const p = currentProduct();
+        const items = itemRows();
+        if (!startDate || !items.length) return null;
         const end = endDate || startDate;
         const durType = document.querySelector('input[name="duration_type"]:checked').value;
-        let duration, subtotal;
+        let duration, lines;
         if (sameDay(startDate, end)) {
-            if (durType === 'half') { duration = '12 Jam'; subtotal = p.priceHalf || Math.round(p.priceDay * 0.6); }
-            else { duration = '1 Hari'; subtotal = p.priceDay; }
+            duration = durType === 'half' ? '12 Jam' : '1 Hari';
+            lines = items.map(i => ({
+                ...i,
+                subtotal: (durType === 'half' ? (i.priceHalf || Math.round(i.priceDay * 0.6)) : i.priceDay) * i.qty,
+            }));
         } else {
             const days = Math.round((end - startDate) / 86400000) + 1;
             duration = days + ' Hari';
-            subtotal = p.priceDay * days;
+            lines = items.map(i => ({ ...i, subtotal: i.priceDay * days * i.qty }));
         }
-        return { duration, subtotal, dp: Math.round(subtotal * 0.3), end };
+        const subtotal = lines.reduce((sum, line) => sum + line.subtotal, 0);
+        return { duration, lines, subtotal, dp: Math.round(subtotal * 0.3), end };
     }
 
     function renderSummary() {
         const body = document.getElementById('summaryBody');
+        const submit = document.getElementById('submitBooking');
+        submit.disabled = itemRows().length === 0;
+
         const price = computePrice();
-        if (!price) { body.innerHTML = '<div class="sum-empty">Pilih alat & tanggal.</div>'; return; }
-        const p = currentProduct();
+        if (!price) { body.innerHTML = '<div class="sum-empty">Pilih tanggal sewa untuk melihat ringkasan.</div>'; return; }
         const payType = document.querySelector('input[name="payment_type"]:checked').value;
         const payMethod = document.querySelector('input[name="payment_method"]:checked').value;
         const payNow = payType === 'DP' ? price.dp : price.subtotal;
+        const methodLabel = PAYMENT_METHODS[payMethod]?.label ?? payMethod;
 
         body.innerHTML = `
-            <div class="sum-row"><span>Alat</span><span>${escapeHtml(p.name)}</span></div>
+            <div class="sum-items">
+                ${price.lines.map(l => `
+                    <div class="sum-row"><span>${escapeHtml(l.name)} <span class="hint">×${l.qty}</span></span><span>${rupiah(l.subtotal)}</span></div>`).join('')}
+            </div>
+            <div class="divider" style="margin:8px 0;"></div>
             <div class="sum-row"><span>Durasi</span><span>${price.duration}</span></div>
             <div class="sum-row"><span>Tanggal</span><span>${formatDateID(startDate)}${!sameDay(startDate, price.end) ? ' – '+formatDateID(price.end) : ''}</span></div>
             <div class="sum-row"><span>Skema</span><span>${payType}</span></div>
-            <div class="sum-row"><span>Metode</span><span>${payMethod}</span></div>
-            <div class="sum-row"><span>Total sewa</span><span>Rp ${price.subtotal.toLocaleString('id-ID')}</span></div>
-            <div class="sum-row total"><span>Bayar sekarang</span><span>Rp ${payNow.toLocaleString('id-ID')}</span></div>
-            ${payType === 'DP' ? `<div class="hint">Sisa Rp ${(price.subtotal-price.dp).toLocaleString('id-ID')} dibayar saat pengambilan.</div>` : ''}`;
+            <div class="sum-row"><span>Metode</span><span>${escapeHtml(methodLabel)}</span></div>
+            <div class="sum-row"><span>Total sewa</span><span>${rupiah(price.subtotal)}</span></div>
+            <div class="sum-row total"><span>Bayar sekarang</span><span>${rupiah(payNow)}</span></div>
+            ${payType === 'DP' ? `<div class="hint">Sisa ${rupiah(price.subtotal-price.dp)} dibayar saat pengambilan.</div>` : ''}`;
     }
 
-    sel.addEventListener('change', () => { renderPreview(); renderSummary(); });
+    // ===== Info metode pembayaran =====
+    function renderPaymentInfo() {
+        const key = document.querySelector('input[name="payment_method"]:checked')?.value;
+        const method = PAYMENT_METHODS[key];
+        const box = document.getElementById('paymentInfo');
+        if (!method) { box.hidden = true; return; }
+        box.hidden = false;
+
+        if (method.type === 'cash') {
+            box.innerHTML = '<b><i class="bi bi-cash-coin"></i> Bayar tunai</b><div>Bayar langsung ke mitra saat pengambilan alat.</div>';
+        } else if (method.type === 'qris') {
+            box.innerHTML = `
+                <div class="qris-box">
+                    <div class="qris-visual" aria-hidden="true"></div>
+                    <div><b><i class="bi bi-qr-code"></i> Scan QRIS</b>
+                    <div>Kode QRIS ditampilkan setelah booking dibuat. Bisa dibayar lewat aplikasi bank / e-wallet apa pun.</div></div>
+                </div>`;
+        } else {
+            const title = method.type === 'virtual_account' ? `Virtual Account ${escapeHtml(method.label)}` : `Transfer ke ${escapeHtml(method.label)}`;
+            box.innerHTML = `
+                <b><i class="bi ${escapeHtml(method.icon)}"></i> ${title}</b>
+                <div class="pay-number">${escapeHtml(method.account_number)}</div>
+                <div>a.n. ${escapeHtml(method.account_name)}</div>
+                <div class="hint">Nominal pembayaran sesuai "Bayar sekarang" di ringkasan.</div>`;
+        }
+    }
+
     document.getElementById('calPrev').addEventListener('click', () => { calDate.setMonth(calDate.getMonth()-1); renderCalendar(); });
     document.getElementById('calNext').addEventListener('click', () => { calDate.setMonth(calDate.getMonth()+1); renderCalendar(); });
 
@@ -301,13 +369,35 @@ document.addEventListener('DOMContentLoaded', () => {
         r.addEventListener('change', () => {
             document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
             document.querySelectorAll('input[type="radio"]:checked').forEach(rc => rc.closest('.radio-card')?.classList.add('selected'));
+            renderPaymentInfo();
             renderSummary();
         });
     });
 
+    // Tambah alat dari rekomendasi tanpa meninggalkan halaman (data form tidak hilang).
+    document.addEventListener('cart:added', event => {
+        const item = event.detail?.item;
+        if (!item || $items.querySelector(`[data-checkout-item][data-id="${item.id}"]`)) return;
+        addItemRow(item);
+        document.querySelector(`[data-rec-id="${item.id}"]`)?.remove();
+        if (!document.querySelector('.rec-item')) document.getElementById('recBlock')?.remove();
+        renderSummary();
+    });
+
     // Init
-    renderPreview();
+    INITIAL_ITEMS.forEach(addItemRow);
+    if (OLD.start) {
+        startDate = parseDateKey(OLD.start);
+        endDate = OLD.end && OLD.end !== OLD.start ? parseDateKey(OLD.end) : null;
+        calDate.setFullYear(startDate.getFullYear(), startDate.getMonth(), 1);
+        $start.value = OLD.start;
+        $end.value = OLD.end || OLD.start;
+        document.getElementById('durationChoice').style.display = (!endDate) ? 'block' : 'none';
+        renderPicked();
+    }
     renderCalendar();
+    renderPaymentInfo();
+    renderSummary();
 });
 </script>
 @endpush

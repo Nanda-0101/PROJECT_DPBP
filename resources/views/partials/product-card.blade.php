@@ -1,5 +1,5 @@
 <div class="product-card">
-  @if($buyOnPage ?? false)
+  @if($onMarketplace ?? false)
     <button type="button" class="pc-detail-trigger" data-product-detail
             data-detail-url="{{ route('marketplace.product.show', $p) }}"
             aria-label="Lihat specsheet {{ $p->name }}">
@@ -30,45 +30,31 @@
 
   <div class="pc-price-row">
     <div class="pc-price">
-      <b>{{ 'Rp '.number_format($p->price_per_day ?: $p->price_sale, 0, ',', '.') }}</b>
-      <div class="hint">{{ $p->price_per_day ? 'per hari' : 'harga jual' }}</div>
+      <b>{{ 'Rp '.number_format($p->price_per_day, 0, ',', '.') }}</b>
+      <div class="hint">per hari</div>
     </div>
-    @if($p->price_sale > 0 && $p->price_per_day > 0)
-      <span class="badge badge-rent">sewa & jual</span>
-    @elseif($p->price_per_day > 0)
-      <span class="badge badge-rent">sewa</span>
-    @else
-      <span class="badge badge-buy">jual</span>
-    @endif
+    <span class="badge badge-rent">sewa</span>
   </div>
 
   <div class="pc-actions">
-    @if($buyOnPage ?? false)
+    @if($onMarketplace ?? false)
       <button type="button" class="btn btn-secondary btn-sm" data-product-detail
               data-detail-url="{{ route('marketplace.product.show', $p) }}">
         <i class="bi bi-card-list"></i> Specsheet
       </button>
     @endif
-    @if($p->price_per_day > 0)
-      <a href="{{ route('booking', ['product' => $p->id]) }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-calendar-plus"></i> Booking
-      </a>
-    @endif
-    @if($p->price_sale > 0)
-      @if($buyOnPage ?? false)
-        <button type="button" class="btn btn-secondary btn-sm"
-                data-buy-url="{{ route('marketplace.buy', $p->id) }}"
-                data-product-id="{{ $p->id }}"
-                data-product-name="{{ $p->name }}"
-                data-product-price="{{ number_format($p->price_sale, 0, ',', '.') }}"
-                data-buy-product>
-          <i class="bi bi-cart"></i> Beli
-        </button>
-      @else
-        <a href="{{ route('marketplace', ['buy' => $p->id]) }}" class="btn btn-secondary btn-sm">
-          <i class="bi bi-cart"></i> Beli
-        </a>
-      @endif
-    @endif
+    <form method="POST" action="{{ route('cart.add', $p) }}" class="js-cart-add">
+      @csrf
+      <button type="submit" class="btn btn-secondary btn-sm" title="Masukkan ke keranjang sewa" aria-label="Masukkan {{ $p->name }} ke keranjang">
+        <i class="bi bi-cart-plus"></i> Keranjang
+      </button>
+    </form>
+    <form method="POST" action="{{ route('cart.add', $p) }}">
+      @csrf
+      <input type="hidden" name="rent_now" value="1">
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="bi bi-calendar-plus"></i> Sewa
+      </button>
+    </form>
   </div>
 </div>

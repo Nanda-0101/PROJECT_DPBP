@@ -7,8 +7,8 @@
 <header class="section" style="padding-bottom:20px;">
   <div class="app-container">
     <span class="eyebrow badge badge-buy"><i class="bi bi-shop"></i> Marketplace</span>
-    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Sewa atau beli peralatan kreatif</h1>
-    <p style="max-width:600px;">Semua alat dari mitra terpercaya. Ingin menjual alatmu sendiri? Klik "Jual Barang Saya".</p>
+    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Sewa peralatan kreatif</h1>
+    <p style="max-width:600px;">Semua alat dari mitra terpercaya, siap disewa harian. Punya alat menganggur? Klik "Sewakan Barang Saya".</p>
   </div>
 </header>
 
@@ -36,12 +36,12 @@
       <option value="rating"     @selected($sort === 'rating')>Rating tertinggi</option>
     </select>
     @auth
-      <button type="button" class="btn btn-primary" onclick="document.getElementById('modalJual').classList.add('open')">
-        <i class="bi bi-plus-circle"></i> Jual Barang Saya
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('modalSewakan').classList.add('open')">
+        <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
       </button>
     @else
       <a href="{{ route('login') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Jual Barang Saya
+        <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
       </a>
     @endauth
   </form>
@@ -57,7 +57,7 @@
   <div class="product-grid mp-grid" style="margin-top:22px;">
     @forelse($products as $p)
       <div class="product-card {{ $highlight == $p->id ? 'highlighted' : '' }}">
-        @include('partials.product-card', ['p' => $p, 'buyOnPage' => true])
+        @include('partials.product-card', ['p' => $p, 'onMarketplace' => true])
       </div>
     @empty
       <div class="empty-state" style="grid-column:1/-1;">
@@ -81,45 +81,15 @@
   </section>
 </div>
 
-{{-- MODAL: Konfirmasi Beli --}}
-<div class="modal-backdrop" id="modalBuy">
+{{-- MODAL: Sewakan Barang --}}
+<div class="modal-backdrop" id="modalSewakan">
   <div class="modal-box glass-strong">
-    <button type="button" class="modal-close" onclick="document.getElementById('modalBuy').classList.remove('open')">
+    <button type="button" class="modal-close" onclick="document.getElementById('modalSewakan').classList.remove('open')">
       <i class="bi bi-x-lg"></i>
     </button>
-    <h3 style="margin-bottom:6px;"><i class="bi bi-cart-check gradient-text"></i> Konfirmasi Pembelian</h3>
-    <p style="margin-bottom:18px;">Lengkapi data berikut untuk menyelesaikan pembelian.</p>
-    <form id="buyForm" method="POST" action="">
-      @csrf
-      <input type="hidden" id="buyProductId" name="product_id">
-      <div id="buySummary" class="tag" style="display:block;padding:12px 14px;margin-bottom:16px;font-size:.9rem;"></div>
-      <div class="field"><label>Nama pembeli</label><input required name="name" class="input" placeholder="Nama lengkap"></div>
-      <div class="field"><label>No. HP / WhatsApp</label><input required name="phone" class="input" placeholder="08xxxxxxxxxx"></div>
-      <div class="field"><label>Alamat pengiriman</label><textarea required name="address" class="input" rows="2"></textarea></div>
-      <div class="field">
-        <label>Metode pembayaran</label>
-        <div style="display:flex;gap:10px;">
-          <label class="radio-card" style="flex:1;"><input type="radio" name="payment" value="Transfer" checked> Transfer</label>
-          <label class="radio-card" style="flex:1;"><input type="radio" name="payment" value="QRIS"> QRIS</label>
-          <label class="radio-card" style="flex:1;"><input type="radio" name="payment" value="Cash"> COD</label>
-        </div>
-      </div>
-      <button type="submit" class="btn btn-primary btn-block">
-        <i class="bi bi-check-circle"></i> Selesaikan Pembelian
-      </button>
-    </form>
-  </div>
-</div>
-
-{{-- MODAL: Jual Barang --}}
-<div class="modal-backdrop" id="modalJual">
-  <div class="modal-box glass-strong">
-    <button type="button" class="modal-close" onclick="document.getElementById('modalJual').classList.remove('open')">
-      <i class="bi bi-x-lg"></i>
-    </button>
-    <h3 style="margin-bottom:6px;"><i class="bi bi-tag gradient-text"></i> Jual Barang Saya</h3>
-    <p style="margin-bottom:18px;">Isi detail alat yang ingin dijual atau disewakan.</p>
-    <form method="POST" action="{{ route('marketplace.sell') }}" enctype="multipart/form-data">
+    <h3 style="margin-bottom:6px;"><i class="bi bi-tag gradient-text"></i> Sewakan Barang Saya</h3>
+    <p style="margin-bottom:18px;">Isi detail alat yang ingin kamu sewakan ke kreator lain.</p>
+    <form method="POST" action="{{ route('marketplace.rent-out') }}" enctype="multipart/form-data">
       @csrf
       <div class="field"><label>Nama barang</label><input required name="name" class="input" placeholder="Contoh: Nikon Z6 II"></div>
       <div class="field"><label>Kategori</label>
@@ -130,8 +100,8 @@
         </select>
       </div>
       <div style="display:flex;gap:12px;">
-        <div class="field" style="flex:1;"><label>Harga jual (Rp)</label><input type="number" min="0" name="price_sale" class="input" placeholder="0"></div>
-        <div class="field" style="flex:1;"><label>Harga sewa/hari (Rp)</label><input type="number" min="0" name="price_rent" class="input" placeholder="0"></div>
+        <div class="field" style="flex:2;"><label>Harga sewa/hari (Rp)</label><input required type="number" min="1" name="price_rent" class="input" placeholder="0"></div>
+        <div class="field" style="flex:1;"><label>Jumlah unit</label><input type="number" min="1" max="99" name="stock" value="1" class="input"></div>
       </div>
       <div class="field"><label>Deskripsi kondisi barang</label><textarea name="desc" class="input" rows="3"></textarea></div>
       <div class="field">
@@ -140,7 +110,7 @@
         <div class="hint"><i class="bi bi-info-circle"></i> Unggah minimal 1 foto asli.</div>
       </div>
       <button type="submit" class="btn btn-primary btn-block">
-        <i class="bi bi-upload"></i> Tayangkan Barang
+        <i class="bi bi-upload"></i> Tayangkan untuk Disewa
       </button>
     </form>
   </div>
@@ -163,6 +133,77 @@ document.addEventListener('DOMContentLoaded', () => {
         text.textContent = value;
         row.append(title, text);
         container.append(row);
+    };
+
+    // Aksi sewa di specsheet: atur jumlah (+ / −), lalu masukkan keranjang atau sewa langsung.
+    const buildRentActions = (product) => {
+        const maxQty = Math.max(1, Number(product.stock) || 1);
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = product.cart_add_url;
+        form.className = 'js-cart-add detail-rent-actions';
+
+        const token = document.createElement('input');
+        token.type = 'hidden';
+        token.name = '_token';
+        token.value = window.CamRent.csrf;
+
+        const stepper = document.createElement('div');
+        stepper.className = 'qty-stepper';
+        const minus = document.createElement('button');
+        minus.type = 'button';
+        minus.setAttribute('aria-label', 'Kurangi jumlah');
+        minus.innerHTML = '<i class="bi bi-dash"></i>';
+        const qty = document.createElement('input');
+        qty.type = 'number';
+        qty.name = 'qty';
+        qty.value = 1;
+        qty.min = 1;
+        qty.max = maxQty;
+        qty.readOnly = true;
+        qty.setAttribute('aria-label', 'Jumlah unit disewa');
+        const plus = document.createElement('button');
+        plus.type = 'button';
+        plus.setAttribute('aria-label', 'Tambah jumlah');
+        plus.innerHTML = '<i class="bi bi-plus"></i>';
+        const sync = () => {
+            minus.disabled = Number(qty.value) <= 1;
+            plus.disabled = Number(qty.value) >= maxQty;
+        };
+        minus.addEventListener('click', () => { qty.value = Math.max(1, Number(qty.value) - 1); sync(); });
+        plus.addEventListener('click', () => { qty.value = Math.min(maxQty, Number(qty.value) + 1); sync(); });
+        sync();
+        stepper.append(minus, qty, plus);
+
+        const stockHint = document.createElement('span');
+        stockHint.className = 'hint';
+        stockHint.textContent = `Maks. ${maxQty} unit`;
+
+        const addButton = document.createElement('button');
+        addButton.type = 'submit';
+        addButton.className = 'btn btn-secondary';
+        addButton.innerHTML = '<i class="bi bi-cart-plus"></i> Masukkan Keranjang';
+
+        const rentNow = document.createElement('button');
+        rentNow.type = 'submit';
+        rentNow.name = 'rent_now';
+        rentNow.value = '1';
+        rentNow.dataset.noAjax = '';
+        rentNow.className = 'btn btn-primary';
+        rentNow.innerHTML = '<i class="bi bi-calendar-plus"></i> Sewa Sekarang';
+
+        const qtyRow = document.createElement('div');
+        qtyRow.className = 'detail-qty-row';
+        const qtyLabel = document.createElement('b');
+        qtyLabel.textContent = 'Jumlah';
+        qtyRow.append(qtyLabel, stepper, stockHint);
+
+        const buttons = document.createElement('div');
+        buttons.className = 'detail-rent-buttons';
+        buttons.append(addButton, rentNow);
+
+        form.append(token, qtyRow, buttons);
+        return form;
     };
 
     const showProductDetail = async (url) => {
@@ -204,7 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
             [
                 ['Sewa / hari', product.price_per_day],
                 ['Sewa / 12 jam', product.price_per_half_day],
-                ['Harga jual', product.price_sale],
             ].forEach(([label, price]) => {
                 if (!price || price <= 0) return;
                 const item = document.createElement('div');
@@ -236,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 empty.textContent = 'Spesifikasi belum tersedia.';
                 detailContent.append(empty);
             }
+            detailContent.append(buildRentActions(product));
         } catch (error) {
             detailContent.replaceChildren();
             const message = document.createElement('p');
@@ -259,26 +300,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.key === 'Escape') detailModal.classList.remove('open');
     });
 
-    const form = document.getElementById('buyForm');
-    const summary = document.getElementById('buySummary');
-
-    document.querySelectorAll('[data-buy-product]').forEach(button => {
-        button.addEventListener('click', () => {
-            form.action = button.dataset.buyUrl;
-            const name = document.createElement('b');
-            name.textContent = button.dataset.productName;
-            summary.replaceChildren(
-                name,
-                document.createTextNode(` — Rp ${button.dataset.productPrice}`)
-            );
-            document.getElementById('modalBuy').classList.add('open');
-        });
-    });
-
-    const requestedProduct = new URLSearchParams(window.location.search).get('buy');
-    const requestedButton = [...document.querySelectorAll('[data-buy-product]')]
-        .find(button => button.dataset.productId === requestedProduct);
-    requestedButton?.click();
 });
 </script>
 @endpush

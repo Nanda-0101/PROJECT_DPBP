@@ -49,9 +49,9 @@ class MarketplaceProviderFilterTest extends TestCase
         ]);
         DB::table('categories')->insert(['id' => 1, 'name' => 'Kamera']);
         DB::table('products')->insert([
-            ['id' => 1, 'seller_id' => 1, 'category_id' => 1, 'name' => 'Kamera Penyewa', 'status' => 'Aktif'],
-            ['id' => 2, 'seller_id' => 2, 'category_id' => 1, 'name' => 'Kamera Mitra', 'status' => 'Aktif'],
-            ['id' => 3, 'seller_id' => null, 'category_id' => 1, 'name' => 'Kamera Vendor', 'status' => 'Aktif'],
+            ['id' => 1, 'seller_id' => 1, 'category_id' => 1, 'name' => 'Kamera Penyewa', 'price_per_day' => 100000, 'status' => 'Aktif'],
+            ['id' => 2, 'seller_id' => 2, 'category_id' => 1, 'name' => 'Kamera Mitra', 'price_per_day' => 100000, 'status' => 'Aktif'],
+            ['id' => 3, 'seller_id' => null, 'category_id' => 1, 'name' => 'Kamera Vendor', 'price_per_day' => 100000, 'status' => 'Aktif'],
         ]);
     }
 

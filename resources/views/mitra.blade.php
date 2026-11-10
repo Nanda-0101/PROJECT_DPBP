@@ -9,7 +9,7 @@
     <div>
       <span class="eyebrow badge badge-rent"><i class="bi bi-briefcase"></i> Untuk Penyedia Alat</span>
       <h1 style="font-size:2.1rem;margin:14px 0 10px;">Jadikan alatmu penghasil cuan sebagai Mitra CamRent</h1>
-      <p style="max-width:480px;">Sewakan atau jual peralatan kreatifmu ke ribuan kreator di seluruh Indonesia.</p>
+      <p style="max-width:480px;">Sewakan peralatan kreatifmu ke ribuan kreator di seluruh Indonesia.</p>
       <div class="mitra-benefit-grid">
         <div class="mitra-benefit glass"><i class="bi bi-graph-up-arrow"></i><span>Penghasilan tambahan</span></div>
         <div class="mitra-benefit glass"><i class="bi bi-shield-check"></i><span>Jaminan penyewa</span></div>

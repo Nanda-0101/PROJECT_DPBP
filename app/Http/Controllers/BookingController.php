@@ -2,35 +2,70 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ImageHelper;
 use App\Models\Booking;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\CartService;
+use App\Services\RecommendationService;
+use App\Support\PaymentMethods;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+/**
+ * Checkout sewa. Item berasal dari keranjang (lihat CartService); satu checkout
+ * bisa berisi banyak alat berbeda dengan jumlah berbeda. Karena tiap alat bisa
+ * dimiliki mitra berbeda, pesanan dipecah per pemilik (CamRent / mitra) —
+ * seperti marketplace pada umumnya — agar konfirmasi mitra tetap jelas.
+ */
 class BookingController extends Controller
 {
-    public function create(Request $request)
+    public function __construct(private CartService $cart)
     {
-        $products = Product::active()->rentable()->with('category')->get();
-        $selected = $request->get('product');
+    }
 
-        return view('booking', compact('products', 'selected'));
+    public function create(RecommendationService $recommendations)
+    {
+        $lines = $this->cart->selectedLines();
+
+        if ($lines->isEmpty()) {
+            return redirect()->route('cart.index')
+                ->with('error', 'Keranjang sewa masih kosong. Pilih alat dulu ya.');
+        }
+
+        return view('booking', [
+            'lines'           => $lines,
+            'initialItems'    => $lines->map(fn ($line) => [
+                'id'         => $line['product']->id,
+                'name'       => $line['product']->name,
+                'category'   => $line['product']->category?->name ?? '-',
+                'image'      => ImageHelper::url($line['product']->image),
+                'icon'       => $line['product']->icon ?: 'bi-box-seam',
+                'price_day'  => (float) $line['product']->price_per_day,
+                'price_half' => (float) $line['product']->price_per_half_day,
+                'qty'        => $line['qty'],
+            ])->values(),
+            'recommendations' => $recommendations->forCart(6),
+            'paymentGroups'   => PaymentMethods::grouped(),
+            'paymentMethods'  => collect(PaymentMethods::all())->map(fn ($m) => [
+                'label'          => $m['label'],
+                'type'           => $m['type'],
+                'icon'           => $m['icon'],
+                'account_name'   => $m['account_name'],
+                'account_number' => $m['account_number'],
+            ]),
+        ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'product_id'     => [
-                'required',
-                Rule::exists('products', 'id')
-                    ->where(fn ($query) => $query
-                        ->where('status', 'Aktif')
-                        ->where('price_per_day', '>', 0)),
-            ],
+            'selected'       => 'required|array|min:1',
+            'selected.*'     => 'integer',
             'renter_name'    => 'required|string|max:120',
             'renter_phone'   => 'required|string|max:20',
             'renter_city'    => 'nullable|string|max:80',
@@ -39,99 +74,156 @@ class BookingController extends Controller
             'end_date'       => 'required|date|after_or_equal:start_date',
             'duration_type'  => 'required|in:half,full',
             'payment_type'   => 'required|in:DP,Bayar Penuh',
-            'payment_method' => 'required|in:Cash,Transfer,QRIS',
+            'payment_method' => ['required', Rule::in(PaymentMethods::keys())],
             'guarantee'      => 'required|string|max:50',
+        ], [
+            'selected.required' => 'Pilih minimal satu alat untuk disewa.',
         ]);
 
-        // Hitung harga di server-side (jangan percaya client)
-        $start = \Carbon\Carbon::parse($request->start_date);
-        $end   = \Carbon\Carbon::parse($request->end_date);
-        $isSameDay = $start->equalTo($end);
+        // Jumlah selalu diambil dari keranjang di server, bukan dari form.
+        $cartQty = $this->cart->raw();
+        $ids = collect($request->input('selected'))->map(fn ($id) => (int) $id)->unique()->sort()->values()->all();
+        foreach ($ids as $id) {
+            if (!isset($cartQty[$id])) {
+                return redirect()->route('cart.index')
+                    ->with('error', 'Isi keranjang berubah. Silakan periksa kembali sebelum checkout.');
+            }
+        }
 
-        $booking = DB::transaction(function () use ($request, $start, $end, $isSameDay) {
-            $product = Product::query()
-                ->whereKey($request->product_id)
-                ->where('status', 'Aktif')
-                ->where('price_per_day', '>', 0)
+        $start = Carbon::parse($request->start_date);
+        $end   = Carbon::parse($request->end_date);
+
+        $result = DB::transaction(function () use ($request, $ids, $cartQty, $start, $end) {
+            // Kunci produk berurutan berdasarkan id supaya aman dari deadlock.
+            $products = Product::query()
+                ->whereIn('id', $ids)
+                ->orderBy('id')
                 ->lockForUpdate()
-                ->firstOrFail();
+                ->get()
+                ->keyBy('id');
 
-            if ($product->stock < 1 || !$this->hasRentalAvailability($product, $start, $end)) {
-                return null;
-            }
+            $rows = [];
+            foreach ($ids as $id) {
+                $product = $products->get($id);
+                $qty = $cartQty[$id];
 
-            if ($isSameDay) {
-                if ($request->duration_type === 'half') {
-                    $duration = '12 Jam';
-                    $subtotal = $product->price_per_half_day ?: round($product->price_per_day * 0.6);
-                } else {
-                    $duration = '1 Hari';
-                    $subtotal = $product->price_per_day;
+                if (!$product || $product->status !== 'Aktif' || $product->price_per_day <= 0) {
+                    return ['error' => 'Salah satu alat sudah tidak tersedia untuk disewa.'];
                 }
-            } else {
-                $days     = $start->diffInDays($end) + 1;
-                $duration = $days . ' Hari';
-                $subtotal = $product->price_per_day * $days;
-            }
+                if ($product->stock < $qty || !$this->hasRentalAvailability($product, $start, $end, $qty)) {
+                    return ['error' => "{$product->name} ({$qty} unit) tidak tersedia pada tanggal yang dipilih."];
+                }
 
-            $dp       = (int) round($subtotal * 0.3);
-            $paidNow  = $request->payment_type === 'DP' ? $dp : $subtotal;
+                [$duration, $unitPrice] = $this->priceFor($product, $start, $end, $request->duration_type);
+                $rows[] = [
+                    'product'  => $product,
+                    'qty'      => $qty,
+                    'duration' => $duration,
+                    'subtotal' => $unitPrice * $qty,
+                ];
+            }
 
             $userId = Auth::id();
             if (!$userId) {
-                $userId = User::createGuest(
-                    $request->renter_name,
-                    $request->renter_phone
-                )->id;
+                $userId = User::createGuest($request->renter_name, $request->renter_phone)->id;
             }
 
-            $booking = Booking::create([
-                'code'           => Booking::generateCode('BKG'),
-                'user_id'        => $userId,
-                'type'           => 'Sewa',
-                'start_date'     => $start->toDateString(),
-                'end_date'       => $end->toDateString(),
-                'duration_label' => $duration,
-                'payment_type'   => $request->payment_type,
-                'payment_method' => $request->payment_method,
-                'guarantee'      => $request->guarantee,
-                'total_amount'   => $subtotal,
-                'paid_amount'    => $paidNow,
-                'status'         => 'Menunggu Konfirmasi',
-                'note'           => $request->note,
-                'address'        => $request->renter_city,
-            ]);
+            $bookings = [];
+            $grouped = collect($rows)->groupBy(fn ($row) => (int) $row['product']->seller_id);
 
-            OrderItem::create([
-                'booking_id'        => $booking->id,
-                'product_id'        => $product->id,
-                'product_name_snap' => $product->name,
-                'price_snap'        => $product->price_per_day,
-                'qty'               => 1,
-                'subtotal'          => $subtotal,
-            ]);
+            foreach ($grouped as $groupRows) {
+                $total   = $groupRows->sum('subtotal');
+                $paidNow = $request->payment_type === 'DP' ? (int) round($total * 0.3) : $total;
 
-            return $booking;
+                $booking = Booking::create([
+                    'code'           => Booking::generateCode('BKG'),
+                    'user_id'        => $userId,
+                    'type'           => 'Sewa',
+                    'start_date'     => $start->toDateString(),
+                    'end_date'       => $end->toDateString(),
+                    'duration_label' => $groupRows->first()['duration'],
+                    'payment_type'   => $request->payment_type,
+                    'payment_method' => $request->payment_method,
+                    'guarantee'      => $request->guarantee,
+                    'total_amount'   => $total,
+                    'paid_amount'    => $paidNow,
+                    'status'         => 'Menunggu Konfirmasi',
+                    'note'           => $request->note,
+                    'address'        => $request->renter_city,
+                ]);
+
+                foreach ($groupRows as $row) {
+                    OrderItem::create([
+                        'booking_id'        => $booking->id,
+                        'product_id'        => $row['product']->id,
+                        'product_name_snap' => $row['product']->name,
+                        'price_snap'        => $row['product']->price_per_day,
+                        'qty'               => $row['qty'],
+                        'subtotal'          => $row['subtotal'],
+                    ]);
+                }
+
+                $bookings[] = $booking;
+            }
+
+            return ['bookings' => $bookings];
         });
 
-        if (!$booking) {
-            return back()->with('error', 'Alat tersebut tidak tersedia pada tanggal yang dipilih.');
+        if (isset($result['error'])) {
+            return back()->withInput()->with('error', $result['error']);
         }
+
+        /** @var Booking[] $bookings */
+        $bookings = $result['bookings'];
+        $this->cart->removeMany($ids);
 
         if (!Auth::check()) {
             $guestUserIds = session('guest_user_ids', []);
-            $guestUserIds[] = $booking->user_id;
+            $guestUserIds[] = $bookings[0]->user_id;
             session(['guest_user_ids' => array_values(array_unique($guestUserIds))]);
         }
 
-        $destination = Auth::check() ? 'dashboard' : 'booking';
+        $codes = collect($bookings)->pluck('code');
+        session()->flash('payment_summary', [
+            'codes'    => $codes->all(),
+            'method'   => $request->payment_method,
+            'type'     => $request->payment_type,
+            'total'    => (float) collect($bookings)->sum('total_amount'),
+            'pay_now'  => (float) collect($bookings)->sum('paid_amount'),
+            'phone'    => $request->renter_phone,
+        ]);
 
-        return redirect()->route($destination)
-            ->with('success', "Booking {$booking->code} berhasil dibuat! Menunggu konfirmasi mitra.");
+        $label = $codes->count() > 1
+            ? 'Booking '.$codes->implode(', ').' berhasil dibuat!'
+            : "Booking {$codes->first()} berhasil dibuat!";
+
+        return redirect()->route('dashboard')
+            ->with('success', $label.' Menunggu konfirmasi mitra.');
     }
 
-    private function hasRentalAvailability(Product $product, \Carbon\Carbon $start, \Carbon\Carbon $end): bool
+    /** @return array{0: string, 1: int|float} [label durasi, harga per unit untuk durasi itu] */
+    private function priceFor(Product $product, Carbon $start, Carbon $end, string $durationType): array
     {
+        if ($start->equalTo($end)) {
+            if ($durationType === 'half') {
+                return ['12 Jam', $product->price_per_half_day ?: round($product->price_per_day * 0.6)];
+            }
+
+            return ['1 Hari', $product->price_per_day];
+        }
+
+        $days = $start->diffInDays($end) + 1;
+
+        return [$days.' Hari', $product->price_per_day * $days];
+    }
+
+    /** Cek unit yang masih bebas pada rentang tanggal, termasuk jumlah yang diminta. */
+    private function hasRentalAvailability(Product $product, Carbon $start, Carbon $end, int $qty): bool
+    {
+        if ($qty > $product->stock) {
+            return false;
+        }
+
         $bookings = Booking::query()
             ->where('type', 'Sewa')
             ->whereIn('status', ['Menunggu Konfirmasi', 'Dikonfirmasi'])
@@ -163,7 +255,7 @@ class BookingController extends Controller
         $reserved = 0;
         foreach ($events as $quantity) {
             $reserved += $quantity;
-            if ($reserved >= $product->stock) {
+            if ($reserved + $qty > $product->stock) {
                 return false;
             }
         }
