@@ -34,7 +34,7 @@
       <div class="hint">{{ $p->price_per_day ? 'per hari' : 'harga jual' }}</div>
     </div>
     @if($p->price_sale > 0 && $p->price_per_day > 0)
-      <span class="badge badge-rent">sewa & jual</span>
+      <span class="badge badge-rent">sewa</span>
     @elseif($p->price_per_day > 0)
       <span class="badge badge-rent">sewa</span>
     @else
@@ -62,11 +62,11 @@
                 data-product-name="{{ $p->name }}"
                 data-product-price="{{ number_format($p->price_sale, 0, ',', '.') }}"
                 data-buy-product>
-          <i class="bi bi-cart"></i> Beli
+          <i class="bi bi-cart"></i> Sewa
         </button>
       @else
         <a href="{{ route('marketplace', ['buy' => $p->id]) }}" class="btn btn-secondary btn-sm">
-          <i class="bi bi-cart"></i> Beli
+          <i class="bi bi-cart"></i> Sewa
         </a>
       @endif
     @endif
