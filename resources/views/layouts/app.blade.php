@@ -109,12 +109,15 @@
             if (!badge) return;
             badge.textContent = count > 99 ? '99+' : count;
             badge.hidden = !count;
+<<<<<<< HEAD
 
             const bar = document.getElementById('cartBar');
             if (bar) {
                 document.getElementById('cartBarCount').textContent = count;
                 bar.classList.toggle('show', count > 0);
             }
+=======
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
         },
 
         formatRupiah(value) {
@@ -140,6 +143,7 @@
             }, 4000);
         });
 
+<<<<<<< HEAD
         // Tambah ke keranjang via AJAX, tanpa pindah halaman.
         async function addToCart(source, url, qty, from, button) {
             button && (button.disabled = true);
@@ -148,11 +152,30 @@
                 window.CamRent.setCartCount(data.cart_count);
                 window.CamRent.toast(data.message, data.at_limit ? 'error' : 'success');
                 source.dispatchEvent(new CustomEvent('cart:added', { bubbles: true, detail: data }));
+=======
+        // Tombol "Keranjang" di mana pun: kirim via AJAX, tanpa pindah halaman.
+        document.addEventListener('submit', async event => {
+            const form = event.target.closest('form.js-cart-add');
+            if (!form || event.submitter?.dataset.noAjax !== undefined) return;
+            event.preventDefault();
+            const button = event.submitter ?? form.querySelector('button[type="submit"]');
+            button && (button.disabled = true);
+            try {
+                const qty = form.querySelector('[name="qty"]')?.value;
+                const data = await window.CamRent.request(form.action, 'POST', {
+                    qty: qty ? Number(qty) : 1,
+                    from: form.dataset.from || null,
+                });
+                window.CamRent.setCartCount(data.cart_count);
+                window.CamRent.toast(data.message, data.at_limit ? 'error' : 'success');
+                form.dispatchEvent(new CustomEvent('cart:added', { bubbles: true, detail: data }));
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
             } catch (error) {
                 window.CamRent.toast(error.message, 'error');
             } finally {
                 button && (button.disabled = false);
             }
+<<<<<<< HEAD
         }
 
         // Form tombol "Keranjang" (kartu produk, specsheet)
@@ -181,6 +204,8 @@
         document.addEventListener('click', event => {
             const button = event.target.closest('.js-quick-add');
             if (button) addToCart(button, button.dataset.url, 1, button.dataset.from, button);
+=======
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
         });
     });
 </script>

@@ -4,6 +4,7 @@
 @section('title', 'Checkout Sewa · CamRent')
 
 @section('content')
+<<<<<<< HEAD
 <header class="page-head" style="padding-bottom:18px;">
   <div class="app-container page-head-row">
     <div>
@@ -16,6 +17,13 @@
       <div class="flow-step active"><b>2</b><span>Checkout</span></div><i class="flow-line"></i>
       <div class="flow-step"><b>3</b><span>Bayar</span></div>
     </div>
+=======
+<header class="section" style="padding-bottom:10px;">
+  <div class="app-container">
+    <span class="eyebrow badge badge-rent"><i class="bi bi-calendar-check"></i> Checkout</span>
+    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Checkout peralatan sewa</h1>
+    <p style="max-width:600px;">Periksa alat yang disewa, tentukan tanggal lewat kalender, dan selesaikan pembayaran dalam beberapa langkah.</p>
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
   </div>
 </header>
 

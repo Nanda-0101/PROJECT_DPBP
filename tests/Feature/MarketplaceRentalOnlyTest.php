@@ -15,13 +15,18 @@ class MarketplaceRentalOnlyTest extends CommerceTestCase
             ->assertSee('Kamera Sewa')
             ->assertSee('Sewa peralatan kreatif')
             ->assertSee('Sewakan Barang Saya')
+<<<<<<< HEAD
             ->assertSee('/hari')
+=======
+            ->assertSee('per hari')
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
             ->assertDontSee('Beli')
             ->assertDontSee('Jual')
             ->assertDontSee('harga jual')
             ->assertDontSee('Pembelian');
     }
 
+<<<<<<< HEAD
     public function test_floating_cart_bar_shows_item_count_on_marketplace_but_not_on_cart_page(): void
     {
         $product = $this->createProduct();
@@ -45,6 +50,8 @@ class MarketplaceRentalOnlyTest extends CommerceTestCase
         $this->assertStringContainsString('<span class="btn-text">Sewa</span>', $html);
     }
 
+=======
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
     public function test_sale_only_products_are_not_listed(): void
     {
         $this->createProduct(['name' => 'Barang Jual Saja', 'price_per_day' => 0, 'price_sale' => 1000000]);

@@ -6,9 +6,15 @@
 @section('content')
 <header class="page-head">
   <div class="app-container">
+<<<<<<< HEAD
     <span class="eyebrow badge badge-rent"><i class="bi bi-shop"></i> Marketplace</span>
     <h1>Sewa peralatan kreatif</h1>
     <p>Pilih alat dari mitra terpercaya, masukkan ke keranjang, lalu sewa sekaligus dalam satu kali checkout.</p>
+=======
+    <span class="eyebrow badge badge-buy"><i class="bi bi-shop"></i> Marketplace</span>
+    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Sewa peralatan kreatif</h1>
+    <p style="max-width:600px;">Semua alat dari mitra terpercaya, siap disewa harian. Punya alat menganggur? Klik "Sewakan Barang Saya".</p>
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
   </div>
 </header>
 
@@ -36,11 +42,19 @@
       <option value="rating"     @selected($sort === 'rating')>Rating tertinggi</option>
     </select>
     @auth
+<<<<<<< HEAD
       <button type="button" class="btn btn-outline" onclick="document.getElementById('modalSewakan').classList.add('open')">
         <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
       </button>
     @else
       <a href="{{ route('login') }}" class="btn btn-outline">
+=======
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('modalSewakan').classList.add('open')">
+        <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
+      </button>
+    @else
+      <a href="{{ route('login') }}" class="btn btn-primary">
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
         <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
       </a>
     @endauth
@@ -61,11 +75,17 @@
 
   <div class="product-grid mp-grid">
     @forelse($products as $p)
+<<<<<<< HEAD
       @include('partials.product-card', [
         'p' => $p,
         'onMarketplace' => true,
         'highlight' => $highlight == $p->id ? 'highlighted' : '',
       ])
+=======
+      <div class="product-card {{ $highlight == $p->id ? 'highlighted' : '' }}">
+        @include('partials.product-card', ['p' => $p, 'onMarketplace' => true])
+      </div>
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
     @empty
       <div class="empty-state" style="grid-column:1/-1;">
         <i class="bi bi-search"></i>

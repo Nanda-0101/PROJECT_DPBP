@@ -46,6 +46,10 @@
         <div class="order-icon"><i class="bi bi-camera-reels"></i></div>
         <div class="order-info">
           <div class="oi-title">{{ $b->items->first()->product_name_snap ?? '-' }}
+<<<<<<< HEAD
+=======
+            @if($b->items->count() > 1)<span class="tag">+{{ $b->items->count() - 1 }} alat lain</span>@endif
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
             <span class="hint">· {{ $b->code }}</span></div>
           <div class="oi-items">
             @foreach($b->items as $it)
@@ -89,6 +93,10 @@
           <div class="order-icon"><i class="bi bi-person-check"></i></div>
           <div class="order-info">
             <div class="oi-title">{{ $b->items->first()->product_name_snap }}
+<<<<<<< HEAD
+=======
+              @if($b->items->count() > 1)<span class="tag">+{{ $b->items->count() - 1 }} alat lain</span>@endif
+>>>>>>> 2a5ba4dc5ab56e538507b4c5e2ab220457c23057
               <span class="hint">· {{ $b->code }}</span></div>
             <div class="oi-items">
               @foreach($b->items as $it)
