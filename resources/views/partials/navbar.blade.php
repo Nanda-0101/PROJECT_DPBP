@@ -7,11 +7,16 @@
     <div class="nav-links" id="navLinks">
       <a href="{{ route('home') }}"        class="{{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a>
       <a href="{{ route('marketplace') }}" class="{{ request()->routeIs('marketplace*') ? 'active' : '' }}">Marketplace</a>
-      <a href="{{ route('booking') }}"     class="{{ request()->routeIs('booking*') ? 'active' : '' }}">Booking</a>
       <a href="{{ route('mitra.index') }}" class="{{ request()->routeIs('mitra*') ? 'active' : '' }}">Jadi Mitra</a>
       <a href="{{ route('cs') }}"          class="{{ request()->routeIs('cs*') ? 'active' : '' }}">Bantuan (CS)</a>
     </div>
     <div class="nav-actions">
+      @php $navCartCount = app(\App\Services\CartService::class)->count(); @endphp
+      <a href="{{ route('cart.index') }}" class="nav-cart {{ request()->routeIs('cart.*', 'booking*') ? 'active' : '' }}"
+         aria-label="Keranjang sewa" title="Keranjang sewa">
+        <i class="bi bi-cart3"></i>
+        <span class="nav-cart-badge" id="cartBadge" @if(!$navCartCount) hidden @endif>{{ $navCartCount > 99 ? '99+' : $navCartCount }}</span>
+      </a>
       @auth
         @php
           $navAvatar = \App\Helpers\ImageHelper::url(auth()->user()->avatar);
@@ -22,7 +27,7 @@
               ->implode('');
         @endphp
         <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-sm">
-          <i class="bi bi-speedometer2"></i> Dashboard
+          <i class="bi bi-speedometer2"></i><span class="nav-btn-text">Dashboard</span>
         </a>
         <a href="{{ route('account.settings') }}" class="nav-profile" aria-label="Pengaturan akun" title="Pengaturan akun">
           @if($navAvatar)
@@ -40,7 +45,7 @@
         </form>
       @else
         <a href="{{ route('login') }}" class="btn btn-primary btn-sm">
-          <i class="bi bi-person-circle"></i> Masuk / Daftar
+          <i class="bi bi-person-circle"></i><span class="nav-btn-text">Masuk / Daftar</span>
         </a>
       @endauth
     </div>

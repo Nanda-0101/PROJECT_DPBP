@@ -6,6 +6,11 @@
 @section('content')
 <section class="section login-section">
   <div class="app-container container-narrow">
+    <div class="login-intro">
+      <span class="brand-mark"><i class="bi bi-camera-reels-fill"></i></span>
+      <h2>Selamat datang di CamRent</h2>
+      <p>Masuk untuk menyewa alat, memantau pesanan, dan menyimpan riwayat sewamu.</p>
+    </div>
     <div class="glass-strong card login-card">
 
       <div class="login-tabs">
@@ -52,6 +57,11 @@
         </button>
       </form>
 
+    </div>
+    <div class="login-perks">
+      <span><i class="bi bi-cart-check"></i>Sewa banyak alat sekaligus</span>
+      <span><i class="bi bi-wallet2"></i>Bayar via Bank &amp; E-Wallet</span>
+      <span><i class="bi bi-shield-check"></i>Aman &amp; terpercaya</span>
     </div>
   </div>
 </section>

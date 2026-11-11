@@ -6,12 +6,12 @@
           <span class="brand-mark"><i class="bi bi-camera-reels-fill"></i></span>
           <span>CamRent</span>
         </div>
-        <p>Platform sewa & jual-beli peralatan kreatif — kamera, lensa, lighting, audio, hingga gimbal, dengan booking dan pembayaran online yang aman.</p>
+        <p>Platform sewa peralatan kreatif — kamera, lensa, lighting, audio, hingga gimbal, dengan keranjang sewa dan pembayaran online yang aman.</p>
       </div>
       <div class="footer-col">
         <h5>Layanan</h5>
         <a href="{{ route('marketplace') }}">Marketplace</a>
-        <a href="{{ route('booking') }}">Booking Kamera</a>
+        <a href="{{ route('cart.index') }}">Keranjang Sewa</a>
         <a href="{{ route('mitra.index') }}">Daftar Jadi Mitra</a>
       </div>
       <div class="footer-col">
@@ -28,6 +28,12 @@
           <i class="bi bi-youtube"></i>
         </div>
       </div>
+    </div>
+    <div class="footer-pay">
+      <span><i class="bi bi-shield-check"></i> Metode pembayaran</span>
+      @foreach(['BCA', 'BRI', 'BNI', 'SeaBank', 'DANA', 'ShopeePay', 'GoPay', 'QRIS', 'Cash'] as $pay)
+        <span class="tag">{{ $pay }}</span>
+      @endforeach
     </div>
     <div class="footer-bottom">
       <span>© 2026 CamRent. Seluruh hak cipta dilindungi.</span>
