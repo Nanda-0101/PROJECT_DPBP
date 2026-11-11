@@ -130,7 +130,7 @@
 
 {{-- CS BANNER --}}
 <section class="app-container">
-  <div class="banner-glass glass" style="background:linear-gradient(120deg,rgba(108,76,255,.14),rgba(62,139,255,.1));">
+  <div class="banner-glass glass" style="background:#F0F5F3;">
     <div>
       <h3><i class="bi bi-headset gradient-text"></i> Ada kendala sewa atau pembayaran?</h3>
       <p>Tim CS kami siap membantu 24/7.</p>

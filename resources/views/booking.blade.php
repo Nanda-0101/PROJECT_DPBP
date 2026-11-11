@@ -63,7 +63,7 @@
 
         <div id="durationChoice" class="field" style="display:none;margin-top:14px;">
           <label>Durasi sewa (tanggal sama)</label>
-          <div style="display:flex;gap:10px;">
+          <div class="responsive-choice-row" style="display:flex;gap:10px;">
             <label class="radio-card" style="flex:1;">
               <input type="radio" name="duration_type" value="half"> 12 Jam
             </label>
@@ -78,7 +78,7 @@
       <div class="glass card bk-step">
         <div class="bk-step-title"><span class="bk-num">3</span> Data penyewa</div>
         <div class="field"><label>Nama penyewa</label><input name="renter_name" class="input" placeholder="Nama lengkap sesuai KTP" value="{{ old('renter_name', auth()->user()->name ?? '') }}" required></div>
-        <div style="display:flex;gap:14px;">
+        <div class="responsive-field-row" style="display:flex;gap:14px;">
           <div class="field" style="flex:1;"><label>No. HP / WhatsApp</label><input name="renter_phone" class="input" placeholder="08xxxxxxxxxx" value="{{ old('renter_phone', auth()->user()->phone ?? '') }}" required></div>
           <div class="field" style="flex:1;"><label>Kota pengambilan</label><input name="renter_city" class="input" placeholder="Contoh: Jakarta Selatan"></div>
         </div>
@@ -105,7 +105,7 @@
         <div class="bk-step-title"><span class="bk-num">5</span> Pembayaran</div>
         <div class="field">
           <label>Skema pembayaran</label>
-          <div style="display:flex;gap:10px;">
+          <div class="responsive-choice-row" style="display:flex;gap:10px;">
             <label class="radio-card selected" style="flex:1;">
               <input type="radio" name="payment_type" value="DP" checked> DP 30%
             </label>

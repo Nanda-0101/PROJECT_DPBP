@@ -106,9 +106,27 @@
     document.addEventListener('DOMContentLoaded', () => {
         // Toggle navbar mobile
         const t = document.getElementById('navToggle');
+        const links = document.getElementById('navLinks');
         if (t) {
             t.addEventListener('click', () => {
-                document.getElementById('navLinks').classList.toggle('open');
+                const isOpen = links.classList.toggle('open');
+                t.setAttribute('aria-expanded', String(isOpen));
+                t.setAttribute('aria-label', isOpen ? 'Tutup menu' : 'Buka menu');
+            });
+            links?.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    links.classList.remove('open');
+                    t.setAttribute('aria-expanded', 'false');
+                    t.setAttribute('aria-label', 'Buka menu');
+                });
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && links?.classList.contains('open')) {
+                    links.classList.remove('open');
+                    t.setAttribute('aria-expanded', 'false');
+                    t.setAttribute('aria-label', 'Buka menu');
+                    t.focus();
+                }
             });
         }
 

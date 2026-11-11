@@ -34,7 +34,7 @@
         @csrf
         <div class="field">
           <label>Daftar sebagai</label>
-          <div style="display:flex;gap:10px;">
+          <div class="responsive-choice-row" style="display:flex;gap:10px;">
             <label class="radio-card selected" style="flex:1;">
               <input type="radio" name="role" value="user" checked> <i class="bi bi-person"></i> User
             </label>

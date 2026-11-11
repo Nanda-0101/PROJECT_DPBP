@@ -22,7 +22,7 @@
       <div>Bayar langsung ke mitra saat pengambilan alat.</div>
     @elseif($type === 'qris')
       <div class="qris-box">
-        <div class="qris-visual" aria-hidden="true"></div>
+        <div class="qris-visual" aria-hidden="true"><i class="bi bi-qr-code"></i></div>
         <div>
           <b><i class="bi bi-qr-code"></i> Scan QRIS CamRent</b>
           <div>Bayar sebesar nominal di atas lewat aplikasi bank atau e-wallet apa pun.</div>

@@ -24,7 +24,7 @@
       <form method="POST" action="{{ route('mitra.store') }}" enctype="multipart/form-data">
         @csrf
         <div class="field"><label>Nama akun / usaha</label><input required name="nama" class="input" value="{{ old('nama', auth()->user()->name ?? '') }}" placeholder="Contoh: Alpha Rental Studio"></div>
-        <div style="display:flex;gap:12px;">
+        <div class="responsive-field-row" style="display:flex;gap:12px;">
           <div class="field" style="flex:1;"><label>Nama pemilik</label><input required name="pemilik" class="input"></div>
           <div class="field" style="flex:1;"><label>No. HP / WhatsApp</label><input {{ auth()->check() ? 'readonly' : 'required' }} name="phone" class="input" value="{{ old('phone', auth()->user()->phone ?? '') }}"></div>
         </div>

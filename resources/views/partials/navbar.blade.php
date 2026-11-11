@@ -9,6 +9,20 @@
       <a href="{{ route('marketplace') }}" class="{{ request()->routeIs('marketplace*') ? 'active' : '' }}">Marketplace</a>
       <a href="{{ route('mitra.index') }}" class="{{ request()->routeIs('mitra*') ? 'active' : '' }}">Jadi Mitra</a>
       <a href="{{ route('cs') }}"          class="{{ request()->routeIs('cs*') ? 'active' : '' }}">Bantuan (CS)</a>
+      @auth
+        <a href="{{ route('dashboard') }}" class="nav-mobile-only {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a href="{{ route('account.settings') }}" class="nav-mobile-only {{ request()->routeIs('account.settings') ? 'active' : '' }}">
+          <i class="bi bi-person-gear"></i> Pengaturan akun
+        </a>
+        <form method="POST" action="{{ route('logout') }}" class="nav-mobile-only">
+          @csrf
+          <button class="nav-mobile-logout" type="submit"><i class="bi bi-box-arrow-right"></i> Keluar</button>
+        </form>
+      @else
+        <a href="{{ route('login') }}" class="nav-mobile-only"><i class="bi bi-person-circle"></i> Masuk / Daftar</a>
+      @endauth
     </div>
     <div class="nav-actions">
       @php $navCartCount = app(\App\Services\CartService::class)->count(); @endphp
@@ -49,7 +63,7 @@
         </a>
       @endauth
     </div>
-    <button class="nav-toggle" id="navToggle" aria-label="Buka menu">
+    <button class="nav-toggle" id="navToggle" aria-label="Buka menu" aria-controls="navLinks" aria-expanded="false">
       <i class="bi bi-list"></i>
     </button>
   </div>

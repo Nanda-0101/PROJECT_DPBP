@@ -99,7 +99,7 @@
           @endforeach
         </select>
       </div>
-      <div style="display:flex;gap:12px;">
+      <div class="responsive-field-row" style="display:flex;gap:12px;">
         <div class="field" style="flex:2;"><label>Harga sewa/hari (Rp)</label><input required type="number" min="1" name="price_rent" class="input" placeholder="0"></div>
         <div class="field" style="flex:1;"><label>Jumlah unit</label><input type="number" min="1" max="99" name="stock" value="1" class="input"></div>
       </div>
