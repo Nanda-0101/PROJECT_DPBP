@@ -35,6 +35,18 @@
         @endif
     </div>
 
+    @unless(request()->routeIs('home'))
+        <div class="breadcrumb-bar">
+            <div class="app-container">
+                <nav class="page-breadcrumb" aria-label="Breadcrumb">
+                    <a href="{{ route('home') }}">Home</a>
+                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    <span aria-current="page">@yield('breadcrumb')</span>
+                </nav>
+            </div>
+        </div>
+    @endunless
+
     @yield('content')
 </main>
 

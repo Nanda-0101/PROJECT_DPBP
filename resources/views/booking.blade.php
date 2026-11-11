@@ -2,12 +2,12 @@
 
 @section('page', 'booking')
 @section('title', 'Checkout Sewa · CamRent')
+@section('breadcrumb', 'Checkout')
 
 @section('content')
 <header class="page-head" style="padding-bottom:18px;">
   <div class="app-container page-head-row">
     <div>
-      <span class="eyebrow badge badge-rent"><i class="bi bi-calendar-check"></i> Checkout</span>
       <h1>Checkout peralatan sewa</h1>
       <p>Periksa alat yang disewa, tentukan tanggal lewat kalender, lalu pilih cara bayar.</p>
     </div>

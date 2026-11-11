@@ -2,11 +2,11 @@
 
 @section('page', 'cs')
 @section('title', 'Pusat Bantuan (CS) · CamRent')
+@section('breadcrumb', 'Pusat Bantuan')
 
 @section('content')
 <header class="page-head">
   <div class="app-container">
-    <span class="eyebrow badge badge-rent"><i class="bi bi-headset"></i> Customer Service</span>
     <h1>Ada kendala? Kami bantu selesaikan.</h1>
     <p>Salah booking, salah tanggal, kendala pembayaran, atau alat bermasalah — laporkan di sini.</p>
   </div>

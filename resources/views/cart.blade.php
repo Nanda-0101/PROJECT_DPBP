@@ -2,30 +2,30 @@
 
 @section('page', 'cart')
 @section('title', 'Keranjang Sewa · CamRent')
+@section('breadcrumb', 'Keranjang')
 
 @section('content')
-<header class="page-head" style="padding-bottom:18px;">
-  <div class="app-container page-head-row">
+<header class="page-head cart-page-head">
+  <div class="app-container cart-page-head-row">
     <div>
-      <span class="eyebrow badge badge-rent"><i class="bi bi-cart3"></i> Keranjang</span>
       <h1>Keranjang sewa</h1>
       <p>Kumpulkan beberapa alat sekaligus — kamera, lensa, lighting — atur jumlahnya dengan tombol + / −, lalu checkout.</p>
     </div>
-    <div class="flow-steps" aria-label="Langkah sewa">
-      <div class="flow-step active"><b>1</b><span>Keranjang</span></div><i class="flow-line"></i>
-      <div class="flow-step"><b>2</b><span>Checkout</span></div><i class="flow-line"></i>
-      <div class="flow-step"><b>3</b><span>Bayar</span></div>
-    </div>
+    <ol class="flow-steps" aria-label="Langkah sewa">
+      <li class="flow-step active"><span class="flow-step-number">1</span><span>Keranjang</span></li>
+      <li class="flow-step"><span class="flow-step-number">2</span><span>Checkout</span></li>
+      <li class="flow-step"><span class="flow-step-number">3</span><span>Bayar</span></li>
+    </ol>
   </div>
 </header>
 
 @if($lines->isEmpty())
   <section class="app-container" style="padding-bottom:20px;">
-    <div class="glass card empty-state">
+    <div class="card empty-state cart-empty-state">
       <i class="bi bi-cart-x"></i>
       <p>Keranjang sewamu masih kosong.</p>
       <a href="{{ route('marketplace') }}" class="btn btn-primary" style="margin-top:14px;">
-        <i class="bi bi-shop"></i> Jelajah Marketplace
+        Lihat Catalog
       </a>
     </div>
   </section>
@@ -45,7 +45,7 @@
         <div id="cartList">
           @foreach($lines as $line)
             @php $p = $line['product']; @endphp
-            <div class="glass card cart-item"
+            <div class="card cart-item"
                  data-cart-item
                  data-price="{{ (float) $p->price_per_day }}"
                  data-stock="{{ (int) $p->stock }}"

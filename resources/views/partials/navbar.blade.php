@@ -6,7 +6,7 @@
     </a>
     <div class="nav-links" id="navLinks">
       <a href="{{ route('home') }}"        class="{{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a>
-      <a href="{{ route('marketplace') }}" class="{{ request()->routeIs('marketplace*') ? 'active' : '' }}">Marketplace</a>
+      <a href="{{ route('marketplace') }}" class="{{ request()->routeIs('marketplace*') ? 'active' : '' }}">Catalog</a>
       <a href="{{ route('mitra.index') }}" class="{{ request()->routeIs('mitra*') ? 'active' : '' }}">Jadi Mitra</a>
       <a href="{{ route('cs') }}"          class="{{ request()->routeIs('cs*') ? 'active' : '' }}">Bantuan (CS)</a>
       @auth

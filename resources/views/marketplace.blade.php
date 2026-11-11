@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('page', 'marketplace')
-@section('title', 'Marketplace · CamRent')
+@section('title', 'Catalog · CamRent')
+@section('breadcrumb', 'Catalog')
 
 @section('content')
 <header class="page-head">
   <div class="app-container">
-    <span class="eyebrow badge badge-rent"><i class="bi bi-shop"></i> Marketplace</span>
     <h1>Sewa peralatan kreatif</h1>
     <p>Pilih alat dari mitra terpercaya, masukkan ke keranjang, lalu sewa sekaligus dalam satu kali checkout.</p>
   </div>
@@ -55,8 +55,10 @@
   </div>
 
   <div class="mp-result-bar">
-    <div><b>{{ $products->count() }} alat</b> <span class="hint" style="display:inline;">tersedia untuk disewa{{ $category ? ' · '.$category : '' }}</span></div>
-    <span class="hint" style="margin:0;"><i class="bi bi-lightbulb"></i> Klik foto atau nama alat untuk melihat specsheet</span>
+    <div class="mp-result-info">
+      <p class="mp-result-count"><b>{{ $products->count() }} alat</b> tersedia untuk disewa{{ $category ? ' · '.$category : '' }}</p>
+      <p class="mp-result-tip"><i class="bi bi-lightbulb"></i> Klik foto atau nama alat untuk melihat specsheet</p>
+    </div>
   </div>
 
   <div class="product-grid mp-grid">

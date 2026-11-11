@@ -12,7 +12,7 @@
         @include('partials.product-image', ['p' => $p])
       </button>
     @else
-      <a href="{{ route('marketplace', ['highlight' => $p->id]) }}" class="pc-detail-trigger" aria-label="Lihat {{ $p->name }} di marketplace">
+      <a href="{{ route('marketplace', ['highlight' => $p->id]) }}" class="pc-detail-trigger" aria-label="Lihat {{ $p->name }} di Catalog">
         @include('partials.product-image', ['p' => $p])
       </a>
     @endif

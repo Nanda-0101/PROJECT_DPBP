@@ -7,7 +7,7 @@
 <header class="hero section">
   <div class="app-container hero-grid">
     <div class="hero-copy">
-      <span class="eyebrow badge badge-rent"><i class="bi bi-lightning-charge-fill"></i> #1 marketplace kreator</span>
+      <span class="eyebrow badge badge-rent"><i class="bi bi-lightning-charge-fill"></i> Catalog peralatan kreator</span>
       <h1>Sewa peralatan kreatif, <span class="gradient-text">tanpa ribet.</span></h1>
       <p class="hero-sub">Kamera, lensa, lighting, mic, sampai gimbal — masukkan keranjang, sewa sekaligus, bayar aman, dan siap dipakai hari ini.</p>
       <div class="hero-cta">

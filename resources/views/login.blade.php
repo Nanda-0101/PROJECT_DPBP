@@ -2,6 +2,7 @@
 
 @section('page', 'login')
 @section('title', 'Masuk / Daftar · CamRent')
+@section('breadcrumb', 'Masuk / Daftar')
 
 @section('content')
 <section class="section login-section">

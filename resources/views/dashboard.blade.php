@@ -2,6 +2,7 @@
 
 @section('page', 'dashboard')
 @section('title', 'Dashboard · CamRent')
+@section('breadcrumb', 'Dashboard')
 
 @section('content')
 <section class="app-container dash-wrap">
