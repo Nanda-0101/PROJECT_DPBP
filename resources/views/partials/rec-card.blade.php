@@ -13,11 +13,19 @@
     <b>{{ 'Rp '.number_format($p->price_per_day, 0, ',', '.') }}</b>
     <span class="hint">/hari</span>
   </div>
-  <form method="POST" action="{{ route('cart.add', $p) }}"
-        @if($ajax ?? false) class="js-cart-add" data-from="{{ $from ?? '' }}" @endif>
-    @csrf
-    <button type="submit" class="btn btn-secondary btn-sm btn-block" aria-label="Tambah {{ $p->name }} ke keranjang">
+  @if($ajax ?? false)
+    {{-- Dipakai di dalam <form> checkout (form bersarang tidak valid) → tombol AJAX, bukan form. --}}
+    <button type="button" class="btn btn-secondary btn-sm btn-block js-quick-add"
+            data-url="{{ route('cart.add', $p) }}" data-from="{{ $from ?? '' }}"
+            aria-label="Tambah {{ $p->name }} ke keranjang">
       <i class="bi bi-cart-plus"></i> Tambah
     </button>
-  </form>
+  @else
+    <form method="POST" action="{{ route('cart.add', $p) }}">
+      @csrf
+      <button type="submit" class="btn btn-secondary btn-sm btn-block" aria-label="Tambah {{ $p->name }} ke keranjang">
+        <i class="bi bi-cart-plus"></i> Tambah
+      </button>
+    </form>
+  @endif
 </div>

@@ -15,11 +15,34 @@ class MarketplaceRentalOnlyTest extends CommerceTestCase
             ->assertSee('Kamera Sewa')
             ->assertSee('Sewa peralatan kreatif')
             ->assertSee('Sewakan Barang Saya')
-            ->assertSee('per hari')
+            ->assertSee('/hari')
             ->assertDontSee('Beli')
             ->assertDontSee('Jual')
             ->assertDontSee('harga jual')
             ->assertDontSee('Pembelian');
+    }
+
+    public function test_floating_cart_bar_shows_item_count_on_marketplace_but_not_on_cart_page(): void
+    {
+        $product = $this->createProduct();
+
+        $this->withSession(['cart' => [$product->id => 2]])
+            ->get(route('marketplace'))
+            ->assertSee('id="cartBar"', false)
+            ->assertSee('class="cart-bar show"', false);
+
+        $this->get(route('cart.index'))->assertDontSee('id="cartBar"', false);
+    }
+
+    public function test_each_product_card_is_a_single_card_with_equal_cart_and_rent_buttons(): void
+    {
+        $this->createProduct(['name' => 'Kartu Tunggal']);
+
+        $html = $this->get(route('marketplace'))->getContent();
+
+        $this->assertSame(1, substr_count($html, 'class="product-card'));
+        $this->assertStringContainsString('Keranjang', $html);
+        $this->assertStringContainsString('<span class="btn-text">Sewa</span>', $html);
     }
 
     public function test_sale_only_products_are_not_listed(): void

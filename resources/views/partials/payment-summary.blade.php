@@ -2,6 +2,7 @@
 @php
   $method = \App\Support\PaymentMethods::find($summary['method']);
   $type = $method['type'] ?? 'cash';
+  $number = $method['account_number'] ?? null;
 @endphp
 <div class="glass card pay-summary">
   <div class="pay-summary-head">
@@ -10,11 +11,19 @@
       <h3 style="font-size:1.1rem;">Selesaikan pembayaranmu</h3>
       <div class="hint" style="margin:0;">Pesanan {{ implode(', ', $summary['codes']) }}</div>
     </div>
+    <span class="status-pill waiting"><i class="bi bi-hourglass-split"></i> Menunggu pembayaran</span>
   </div>
 
-  <div class="sum-row"><span>Metode</span><span>{{ $method['label'] ?? $summary['method'] }}</span></div>
-  <div class="sum-row"><span>Total sewa</span><span>Rp {{ number_format($summary['total'], 0, ',', '.') }}</span></div>
-  <div class="sum-row total"><span>Bayar sekarang ({{ $summary['type'] }})</span><span>Rp {{ number_format($summary['pay_now'], 0, ',', '.') }}</span></div>
+  <div class="pay-summary-grid">
+    <div>
+      <div class="pay-amount-label">Bayar sekarang ({{ $summary['type'] }})</div>
+      <div class="pay-amount">Rp {{ number_format($summary['pay_now'], 0, ',', '.') }}</div>
+      <div class="sum-row"><span>Metode</span><span>{{ $method['label'] ?? $summary['method'] }}</span></div>
+      <div class="sum-row"><span>Total sewa</span><span>Rp {{ number_format($summary['total'], 0, ',', '.') }}</span></div>
+      @if($summary['pay_now'] < $summary['total'])
+        <div class="sum-row"><span>Sisa dibayar saat pengambilan</span><span>Rp {{ number_format($summary['total'] - $summary['pay_now'], 0, ',', '.') }}</span></div>
+      @endif
+    </div>
 
   <div class="payment-info-box">
     @if($type === 'cash')

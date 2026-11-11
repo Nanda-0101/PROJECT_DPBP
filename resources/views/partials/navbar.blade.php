@@ -41,7 +41,7 @@
               ->implode('');
         @endphp
         <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-sm">
-          <i class="bi bi-speedometer2"></i> Dashboard
+          <i class="bi bi-speedometer2"></i><span class="nav-btn-text">Dashboard</span>
         </a>
         <a href="{{ route('account.settings') }}" class="nav-profile" aria-label="Pengaturan akun" title="Pengaturan akun">
           @if($navAvatar)
@@ -59,7 +59,7 @@
         </form>
       @else
         <a href="{{ route('login') }}" class="btn btn-primary btn-sm">
-          <i class="bi bi-person-circle"></i> Masuk / Daftar
+          <i class="bi bi-person-circle"></i><span class="nav-btn-text">Masuk / Daftar</span>
         </a>
       @endauth
     </div>

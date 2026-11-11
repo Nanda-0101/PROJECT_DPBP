@@ -29,6 +29,12 @@
         </div>
       </div>
     </div>
+    <div class="footer-pay">
+      <span><i class="bi bi-shield-check"></i> Metode pembayaran</span>
+      @foreach(['BCA', 'BRI', 'BNI', 'SeaBank', 'DANA', 'ShopeePay', 'GoPay', 'QRIS', 'Cash'] as $pay)
+        <span class="tag">{{ $pay }}</span>
+      @endforeach
+    </div>
     <div class="footer-bottom">
       <span>© 2026 CamRent. Seluruh hak cipta dilindungi.</span>
       <span>Dibuat untuk kreator Indonesia 🇮🇩</span>

@@ -4,11 +4,18 @@
 @section('title', 'Keranjang Sewa · CamRent')
 
 @section('content')
-<header class="section" style="padding-bottom:10px;">
-  <div class="app-container">
-    <span class="eyebrow badge badge-rent"><i class="bi bi-cart3"></i> Keranjang</span>
-    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Keranjang sewa</h1>
-    <p style="max-width:600px;">Kumpulkan beberapa alat sekaligus — kamera, lensa, lighting — atur jumlahnya, lalu checkout dalam satu kali booking.</p>
+<header class="page-head" style="padding-bottom:18px;">
+  <div class="app-container page-head-row">
+    <div>
+      <span class="eyebrow badge badge-rent"><i class="bi bi-cart3"></i> Keranjang</span>
+      <h1>Keranjang sewa</h1>
+      <p>Kumpulkan beberapa alat sekaligus — kamera, lensa, lighting — atur jumlahnya dengan tombol + / −, lalu checkout.</p>
+    </div>
+    <div class="flow-steps" aria-label="Langkah sewa">
+      <div class="flow-step active"><b>1</b><span>Keranjang</span></div><i class="flow-line"></i>
+      <div class="flow-step"><b>2</b><span>Checkout</span></div><i class="flow-line"></i>
+      <div class="flow-step"><b>3</b><span>Bayar</span></div>
+    </div>
   </div>
 </header>
 

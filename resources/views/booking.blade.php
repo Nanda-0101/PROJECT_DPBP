@@ -4,11 +4,18 @@
 @section('title', 'Checkout Sewa · CamRent')
 
 @section('content')
-<header class="section" style="padding-bottom:10px;">
-  <div class="app-container">
-    <span class="eyebrow badge badge-rent"><i class="bi bi-calendar-check"></i> Checkout</span>
-    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Checkout peralatan sewa</h1>
-    <p style="max-width:600px;">Periksa alat yang disewa, tentukan tanggal lewat kalender, dan selesaikan pembayaran dalam beberapa langkah.</p>
+<header class="page-head" style="padding-bottom:18px;">
+  <div class="app-container page-head-row">
+    <div>
+      <span class="eyebrow badge badge-rent"><i class="bi bi-calendar-check"></i> Checkout</span>
+      <h1>Checkout peralatan sewa</h1>
+      <p>Periksa alat yang disewa, tentukan tanggal lewat kalender, lalu pilih cara bayar.</p>
+    </div>
+    <div class="flow-steps" aria-label="Langkah sewa">
+      <div class="flow-step done"><b><i class="bi bi-check-lg"></i></b><span>Keranjang</span></div><i class="flow-line"></i>
+      <div class="flow-step active"><b>2</b><span>Checkout</span></div><i class="flow-line"></i>
+      <div class="flow-step"><b>3</b><span>Bayar</span></div>
+    </div>
   </div>
 </header>
 
@@ -45,6 +52,7 @@
       {{-- Step 2 --}}
       <div class="glass card bk-step">
         <div class="bk-step-title"><span class="bk-num">2</span> Pilih tanggal sewa</div>
+        <div class="cal-layout">
         <div class="calendar-wrap">
           <div class="calendar-head">
             <button type="button" class="btn btn-ghost btn-sm" id="calPrev"><i class="bi bi-chevron-left"></i></button>
@@ -56,12 +64,18 @@
           </div>
           <div class="calendar-grid" id="calGrid"></div>
         </div>
+        <div class="cal-aside">
         <div class="bk-picked" id="bkPicked">Belum ada tanggal dipilih.</div>
+        <ul class="cal-tips">
+          <li><i class="bi bi-1-circle"></i><span>Klik tanggal <b>mulai</b>, lalu klik tanggal <b>selesai</b>.</span></li>
+          <li><i class="bi bi-2-circle"></i><span>Tanggal mulai &amp; selesai sama = sewa <b>1 hari</b> atau <b>12 jam</b>.</span></li>
+          <li><i class="bi bi-3-circle"></i><span>Harga = tarif per hari × jumlah hari × jumlah unit.</span></li>
+        </ul>
 
         <input type="hidden" name="start_date" id="startDateInput">
         <input type="hidden" name="end_date" id="endDateInput">
 
-        <div id="durationChoice" class="field" style="display:none;margin-top:14px;">
+        <div id="durationChoice" class="field" style="display:none;margin:0;">
           <label>Durasi sewa (tanggal sama)</label>
           <div class="responsive-choice-row" style="display:flex;gap:10px;">
             <label class="radio-card" style="flex:1;">
@@ -71,6 +85,8 @@
               <input type="radio" name="duration_type" value="full" checked> 1 Hari Penuh
             </label>
           </div>
+        </div>
+        </div>
         </div>
       </div>
 

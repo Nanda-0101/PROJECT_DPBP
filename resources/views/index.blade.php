@@ -34,10 +34,10 @@
             @else
               <i class="bi {{ $p->icon ?? 'bi-box-seam' }}"></i>
             @endif
-            <span style="font-weight:700;">{{ $p->name }}</span>
+            <span class="mm-name">{{ $p->name }}</span>
             <div class="mm-price">
-              <span>{{ 'Rp '.number_format($p->price_per_day,0,',','.') }}/hari</span>
-              <span class="badge badge-rent">sewa</span>
+              <b>{{ 'Rp '.number_format($p->price_per_day,0,',','.') }}<span class="hint" style="display:inline;font-weight:600;">/hari</span></b>
+              <span class="rating"><i class="bi bi-star-fill"></i> {{ $p->rating }}</span>
             </div>
           </div>
         @empty
@@ -52,7 +52,10 @@
 <section class="section" style="padding-top:10px;">
   <div class="app-container">
     <div class="section-head">
-      <h2><i class="bi bi-grid-3x3-gap-fill gradient-text"></i> Kategori populer</h2>
+      <div>
+        <h2><i class="bi bi-grid-3x3-gap-fill gradient-text"></i> Kategori populer</h2>
+        <p class="section-sub">Cari alat sesuai kebutuhan produksimu.</p>
+      </div>
       <a href="{{ route('marketplace') }}" class="link-more">Lihat semua <i class="bi bi-arrow-right"></i></a>
     </div>
     <div class="cat-grid">
@@ -69,7 +72,10 @@
 <section class="section" style="padding-top:10px;">
   <div class="app-container">
     <div class="section-head">
-      <h2><i class="bi bi-graph-up-arrow gradient-text"></i> Sedang hangat disewa</h2>
+      <div>
+        <h2><i class="bi bi-graph-up-arrow gradient-text"></i> Sedang hangat disewa</h2>
+        <p class="section-sub">Alat yang paling banyak dipilih kreator minggu ini.</p>
+      </div>
       <a href="{{ route('marketplace') }}" class="link-more">Semua alat sewa <i class="bi bi-arrow-right"></i></a>
     </div>
     <div class="product-grid">
@@ -120,10 +126,10 @@
       <h2><i class="bi bi-signpost-split-fill gradient-text"></i> Cara kerja CamRent</h2>
     </div>
     <div class="steps-grid">
-      <div class="step-card glass"><div class="step-num">1</div><h4>Pilih & jadwalkan</h4><p>Masukkan alat ke keranjang, lalu tentukan tanggal sewa lewat kalender.</p></div>
-      <div class="step-card glass"><div class="step-num">2</div><h4>Bayar dengan aman</h4><p>DP 30% atau bayar penuh via Bank, E-Wallet, atau QRIS.</p></div>
-      <div class="step-card glass"><div class="step-num">3</div><h4>Ambil & gunakan</h4><p>Konfirmasi mitra masuk, ambil alat sesuai jadwal.</p></div>
-      <div class="step-card glass"><div class="step-num">4</div><h4>Kembalikan & selesai</h4><p>Kembalikan tepat waktu, jaminan dikembalikan.</p></div>
+      <div class="step-card glass" data-step="1"><div class="step-num">1</div><h4>Pilih & jadwalkan</h4><p>Masukkan alat ke keranjang, lalu tentukan tanggal sewa lewat kalender.</p></div>
+      <div class="step-card glass" data-step="2"><div class="step-num">2</div><h4>Bayar dengan aman</h4><p>DP 30% atau bayar penuh via Bank, E-Wallet, atau QRIS.</p></div>
+      <div class="step-card glass" data-step="3"><div class="step-num">3</div><h4>Ambil & gunakan</h4><p>Konfirmasi mitra masuk, ambil alat sesuai jadwal.</p></div>
+      <div class="step-card glass" data-step="4"><div class="step-num">4</div><h4>Kembalikan & selesai</h4><p>Kembalikan tepat waktu, jaminan dikembalikan.</p></div>
     </div>
   </div>
 </section>

@@ -14,27 +14,40 @@
 @include('partials.navbar')
 
 <main>
-    @if(session('success'))
-        <div class="toast success" style="position:fixed;top:20px;right:20px;z-index:999">
-            <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="toast error" style="position:fixed;top:20px;right:20px;z-index:999">
-            <i class="bi bi-x-circle-fill" style="color:var(--danger)"></i>
-            <span>{{ session('error') }}</span>
-        </div>
-    @endif
-    @if($errors->any())
-        <div class="toast error" style="position:fixed;top:20px;right:20px;z-index:999">
-            <i class="bi bi-exclamation-circle-fill" style="color:var(--danger)"></i>
-            <span>{{ $errors->first() }}</span>
-        </div>
-    @endif
+    <div id="toast-wrap" aria-live="polite">
+        @if(session('success'))
+            <div class="toast success">
+                <i class="bi bi-check-circle-fill" style="color:var(--success)"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="toast error">
+                <i class="bi bi-x-circle-fill" style="color:var(--danger)"></i>
+                <span>{{ session('error') }}</span>
+            </div>
+        @endif
+        @if($errors->any())
+            <div class="toast error">
+                <i class="bi bi-exclamation-circle-fill" style="color:var(--danger)"></i>
+                <span>{{ $errors->first() }}</span>
+            </div>
+        @endif
+    </div>
 
     @yield('content')
 </main>
+
+@unless(request()->routeIs('cart.*', 'booking*', 'login*'))
+    @php $barCount = app(\App\Services\CartService::class)->count(); @endphp
+    <div class="cart-bar{{ $barCount ? ' show' : '' }}" id="cartBar" role="status" aria-live="polite">
+        <div class="cart-bar-info">
+            <i class="bi bi-cart3"></i>
+            <span><b id="cartBarCount">{{ $barCount }}</b> alat di keranjang</span>
+        </div>
+        <a href="{{ route('cart.index') }}" class="btn btn-primary btn-sm">Lihat Keranjang <i class="bi bi-arrow-right"></i></a>
+    </div>
+@endunless
 
 @include('partials.footer')
 
@@ -96,6 +109,12 @@
             if (!badge) return;
             badge.textContent = count > 99 ? '99+' : count;
             badge.hidden = !count;
+
+            const bar = document.getElementById('cartBar');
+            if (bar) {
+                document.getElementById('cartBarCount').textContent = count;
+                bar.classList.toggle('show', count > 0);
+            }
         },
 
         formatRupiah(value) {
@@ -139,27 +158,47 @@
             }, 4000);
         });
 
-        // Tombol "Keranjang" di mana pun: kirim via AJAX, tanpa pindah halaman.
-        document.addEventListener('submit', async event => {
-            const form = event.target.closest('form.js-cart-add');
-            if (!form || event.submitter?.dataset.noAjax !== undefined) return;
-            event.preventDefault();
-            const button = event.submitter ?? form.querySelector('button[type="submit"]');
+        // Tambah ke keranjang via AJAX, tanpa pindah halaman.
+        async function addToCart(source, url, qty, from, button) {
             button && (button.disabled = true);
             try {
-                const qty = form.querySelector('[name="qty"]')?.value;
-                const data = await window.CamRent.request(form.action, 'POST', {
-                    qty: qty ? Number(qty) : 1,
-                    from: form.dataset.from || null,
-                });
+                const data = await window.CamRent.request(url, 'POST', { qty, from: from || null });
                 window.CamRent.setCartCount(data.cart_count);
                 window.CamRent.toast(data.message, data.at_limit ? 'error' : 'success');
-                form.dispatchEvent(new CustomEvent('cart:added', { bubbles: true, detail: data }));
+                source.dispatchEvent(new CustomEvent('cart:added', { bubbles: true, detail: data }));
             } catch (error) {
                 window.CamRent.toast(error.message, 'error');
             } finally {
                 button && (button.disabled = false);
             }
+        }
+
+        // Form tombol "Keranjang" (kartu produk, specsheet)
+        document.addEventListener('submit', event => {
+            const form = event.target.closest('form.js-cart-add');
+            if (!form || event.submitter?.dataset.noAjax !== undefined) return;
+            event.preventDefault();
+            const qty = form.querySelector('[name="qty"]')?.value;
+            addToCart(form, form.action, qty ? Number(qty) : 1, form.dataset.from,
+                event.submitter ?? form.querySelector('button[type="submit"]'));
+        });
+
+        // Salin nomor rekening / VA
+        document.addEventListener('click', async event => {
+            const button = event.target.closest('.copy-btn');
+            if (!button) return;
+            try {
+                await navigator.clipboard.writeText(button.dataset.copy);
+                window.CamRent.toast('Nomor berhasil disalin.');
+            } catch (error) {
+                window.CamRent.toast('Gagal menyalin. Salin manual ya.', 'error');
+            }
+        });
+
+        // Tombol "Tambah" rekomendasi di dalam form checkout
+        document.addEventListener('click', event => {
+            const button = event.target.closest('.js-quick-add');
+            if (button) addToCart(button, button.dataset.url, 1, button.dataset.from, button);
         });
     });
 </script>

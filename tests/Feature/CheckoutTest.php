@@ -180,7 +180,9 @@ class CheckoutTest extends CommerceTestCase
             ->assertSee('Kamera Uji ×1')
             ->assertSee('Lensa Uji ×2')
             ->assertSee('Selesaikan pembayaranmu')
-            ->assertSee('Virtual Account DANA');
+            ->assertSee('Virtual Account DANA')
+            ->assertSee('class="copy-btn"', false)
+            ->assertSee('data-copy="8812081234567890"', false);
     }
 
     public function test_guest_checkout_is_visible_in_the_guest_dashboard(): void

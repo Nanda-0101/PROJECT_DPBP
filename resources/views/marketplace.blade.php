@@ -4,11 +4,11 @@
 @section('title', 'Marketplace · CamRent')
 
 @section('content')
-<header class="section" style="padding-bottom:20px;">
+<header class="page-head">
   <div class="app-container">
-    <span class="eyebrow badge badge-buy"><i class="bi bi-shop"></i> Marketplace</span>
-    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Sewa peralatan kreatif</h1>
-    <p style="max-width:600px;">Semua alat dari mitra terpercaya, siap disewa harian. Punya alat menganggur? Klik "Sewakan Barang Saya".</p>
+    <span class="eyebrow badge badge-rent"><i class="bi bi-shop"></i> Marketplace</span>
+    <h1>Sewa peralatan kreatif</h1>
+    <p>Pilih alat dari mitra terpercaya, masukkan ke keranjang, lalu sewa sekaligus dalam satu kali checkout.</p>
   </div>
 </header>
 
@@ -36,11 +36,11 @@
       <option value="rating"     @selected($sort === 'rating')>Rating tertinggi</option>
     </select>
     @auth
-      <button type="button" class="btn btn-primary" onclick="document.getElementById('modalSewakan').classList.add('open')">
+      <button type="button" class="btn btn-outline" onclick="document.getElementById('modalSewakan').classList.add('open')">
         <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
       </button>
     @else
-      <a href="{{ route('login') }}" class="btn btn-primary">
+      <a href="{{ route('login') }}" class="btn btn-outline">
         <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
       </a>
     @endauth
@@ -54,11 +54,18 @@
     @endforeach
   </div>
 
-  <div class="product-grid mp-grid" style="margin-top:22px;">
+  <div class="mp-result-bar">
+    <div><b>{{ $products->count() }} alat</b> <span class="hint" style="display:inline;">tersedia untuk disewa{{ $category ? ' · '.$category : '' }}</span></div>
+    <span class="hint" style="margin:0;"><i class="bi bi-lightbulb"></i> Klik foto atau nama alat untuk melihat specsheet</span>
+  </div>
+
+  <div class="product-grid mp-grid">
     @forelse($products as $p)
-      <div class="product-card {{ $highlight == $p->id ? 'highlighted' : '' }}">
-        @include('partials.product-card', ['p' => $p, 'onMarketplace' => true])
-      </div>
+      @include('partials.product-card', [
+        'p' => $p,
+        'onMarketplace' => true,
+        'highlight' => $highlight == $p->id ? 'highlighted' : '',
+      ])
     @empty
       <div class="empty-state" style="grid-column:1/-1;">
         <i class="bi bi-search"></i>
