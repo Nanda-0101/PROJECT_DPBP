@@ -31,7 +31,7 @@ class CsController extends Controller
             ['q' => 'Bagaimana cara membatalkan booking?', 'a' => 'Buka Dashboard > Riwayat, klik "Ada masalah?".'],
             ['q' => 'Apa bedanya DP dan Bayar Penuh?',      'a' => 'DP 30% di awal, sisanya saat pengambilan.'],
             ['q' => 'Jaminan apa saja yang diterima?',      'a' => 'KTP, SIM, atau Paspor asli.'],
-            ['q' => 'Metode pembayaran apa saja?',          'a' => 'Cash, Transfer bank, dan QRIS.'],
+            ['q' => 'Metode pembayaran apa saja?',          'a' => 'Cash, transfer bank (BCA, BRI, BNI), virtual account/e-wallet (SeaBank, DANA, ShopeePay, GoPay), dan QRIS.'],
             ['q' => 'Bagaimana jika alat rusak?',           'a' => 'Laporkan via form pengaduan di halaman ini.'],
             ['q' => 'Bagaimana cara jadi mitra?',           'a' => 'Kunjungi halaman "Jadi Mitra" dan isi formulir.'],
         ];
