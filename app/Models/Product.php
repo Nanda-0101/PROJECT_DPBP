@@ -35,6 +35,12 @@ class Product extends Model
         return $this->hasMany(ProductSpec::class)->orderBy('sort_order');
     }
 
+    /** Foto tambahan (sudut lain). Foto utama ada di kolom `image`. */
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);

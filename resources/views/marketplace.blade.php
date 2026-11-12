@@ -132,16 +132,211 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailModal = document.getElementById('modalProductDetail');
     const detailContent = document.getElementById('productDetailContent');
 
-    const addDetailText = (container, label, value) => {
-        if (value === null || value === undefined || value === '') return;
-        const row = document.createElement('div');
-        row.className = 'product-detail-row';
-        const title = document.createElement('b');
-        title.textContent = label;
-        const text = document.createElement('span');
-        text.textContent = value;
-        row.append(title, text);
-        container.append(row);
+    const el = (tag, className, text) => {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined && text !== null) node.textContent = text;
+        return node;
+    };
+    const icon = (name) => {
+        const i = document.createElement('i');
+        i.className = `bi ${name}`;
+        return i;
+    };
+    const iconButton = (className, label, iconName) => {
+        const button = el('button', className);
+        button.type = 'button';
+        button.setAttribute('aria-label', label);
+        button.append(icon(iconName));
+        return button;
+    };
+
+    // ---- Lightbox: foto penuh tanpa terpotong ----
+    const lightbox = el('div', 'pd-lightbox');
+    lightbox.hidden = true;
+    const lightboxImage = el('img', 'pd-lightbox-img');
+    const lightboxClose = iconButton('pd-lightbox-close', 'Tutup foto', 'bi-x-lg');
+    lightbox.append(lightboxImage, lightboxClose);
+    document.body.append(lightbox);
+    const closeLightbox = () => { lightbox.hidden = true; };
+    lightbox.addEventListener('click', closeLightbox);
+
+    // ---- Galeri foto (beberapa sudut) ----
+    let activeGallery = null;
+
+    const buildGallery = (product) => {
+        const images = product.images?.length
+            ? product.images
+            : (product.image ? [{ url: product.image, label: 'Tampak utama' }] : []);
+
+        const gallery = el('div', 'pd-gallery');
+        const stage = el('div', 'pd-stage');
+        gallery.append(stage);
+
+        if (!images.length) {
+            stage.classList.add('pd-stage-empty');
+            stage.append(icon('bi-image'), el('span', null, 'Foto belum tersedia'));
+            activeGallery = null;
+            return gallery;
+        }
+
+        let index = 0;
+        const image = el('img', 'pd-stage-img');
+        const empty = el('div', 'pd-stage-fallback');
+        empty.hidden = true;
+        empty.append(icon('bi-image'), el('span', null, 'Foto tidak dapat dimuat'));
+        image.addEventListener('error', () => { image.hidden = true; empty.hidden = false; });
+        image.addEventListener('load', () => { image.hidden = false; empty.hidden = true; });
+
+        const angle = el('span', 'pd-angle');
+        const counter = el('span', 'pd-counter');
+        const zoom = iconButton('pd-zoom', 'Perbesar foto', 'bi-arrows-fullscreen');
+        stage.append(image, empty, angle, counter, zoom);
+
+        const thumbButtons = [];
+        const show = (next) => {
+            index = (next + images.length) % images.length;
+            const current = images[index];
+            image.hidden = false;
+            empty.hidden = true;
+            image.src = current.url;
+            image.alt = `${product.name} — ${current.label}`;
+            angle.textContent = current.label;
+            counter.textContent = `${index + 1} / ${images.length}`;
+            counter.hidden = images.length < 2;
+            thumbButtons.forEach((thumb, i) => {
+                const active = i === index;
+                thumb.classList.toggle('active', active);
+                thumb.setAttribute('aria-current', active ? 'true' : 'false');
+                if (active) thumb.scrollIntoView({ block: 'nearest', inline: 'center' });
+            });
+        };
+
+        const openZoom = () => {
+            lightboxImage.src = images[index].url;
+            lightboxImage.alt = image.alt;
+            lightbox.hidden = false;
+        };
+        image.addEventListener('click', openZoom);
+        zoom.addEventListener('click', openZoom);
+
+        if (images.length > 1) {
+            const prev = iconButton('pd-nav pd-prev', 'Foto sebelumnya', 'bi-chevron-left');
+            const next = iconButton('pd-nav pd-next', 'Foto berikutnya', 'bi-chevron-right');
+            prev.addEventListener('click', () => show(index - 1));
+            next.addEventListener('click', () => show(index + 1));
+            stage.append(prev, next);
+
+            // geser kiri/kanan di layar sentuh
+            let startX = null;
+            stage.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+            stage.addEventListener('touchend', e => {
+                if (startX === null) return;
+                const delta = e.changedTouches[0].clientX - startX;
+                if (Math.abs(delta) > 40) show(index + (delta < 0 ? 1 : -1));
+                startX = null;
+            });
+
+            const strip = el('div', 'pd-thumbs');
+            images.forEach((item, i) => {
+                const thumb = el('button', 'pd-thumb');
+                thumb.type = 'button';
+                thumb.title = item.label;
+                thumb.setAttribute('aria-label', `Lihat ${item.label}`);
+                const picture = el('img');
+                picture.src = item.url;
+                picture.alt = '';
+                picture.loading = 'lazy';
+                thumb.append(picture);
+                thumb.addEventListener('click', () => show(i));
+                thumbButtons.push(thumb);
+                strip.append(thumb);
+            });
+            gallery.append(strip);
+        } else {
+            gallery.append(el('p', 'pd-photo-hint', 'Klik foto untuk memperbesar.'));
+        }
+
+        show(0);
+        activeGallery = { show, move: (step) => show(index + step), count: images.length };
+        return gallery;
+    };
+
+    // ---- Tabel spesifikasi ----
+    const buildSpecs = (product) => {
+        const wrap = el('section', 'pd-specs');
+        wrap.append(el('h4', null, 'Spesifikasi'));
+
+        const rows = [];
+        if (product.brand) rows.push({ label: 'Merek', value: product.brand });
+        (product.spec_rows ?? []).forEach(row => rows.push(row));
+        const features = product.spec_features ?? [];
+
+        if (!rows.length && !features.length) {
+            wrap.append(el('p', 'hint', 'Spesifikasi belum tersedia.'));
+            return wrap;
+        }
+
+        if (rows.length) {
+            const table = el('dl', 'spec-table');
+            rows.forEach(row => {
+                const line = el('div', 'spec-row');
+                line.append(el('dt', null, row.label), el('dd', null, row.value));
+                table.append(line);
+            });
+            wrap.append(table);
+        }
+        if (features.length) {
+            if (rows.length) wrap.append(el('h5', 'pd-sub', 'Fitur'));
+            const list = el('ul', 'product-spec-list');
+            features.forEach(text => list.append(el('li', null, text)));
+            wrap.append(list);
+        }
+        return wrap;
+    };
+
+    const buildPrices = (product) => {
+        const prices = el('div', 'detail-price-box');
+        [
+            ['Sewa / hari', product.price_per_day],
+            ['Sewa / 12 jam', product.price_per_half_day],
+        ].forEach(([label, price]) => {
+            if (!price || price <= 0) return;
+            const item = el('div', 'dp-item');
+            item.append(el('span', null, label), el('b', null, `Rp ${Number(price).toLocaleString('id-ID')}`));
+            prices.append(item);
+        });
+        return prices;
+    };
+
+    const buildInfo = (product) => {
+        const info = el('div', 'pd-info');
+
+        const chips = el('div', 'pd-chips');
+        if (product.category) chips.append(el('span', 'pd-chip', product.category));
+        if (product.rating) {
+            const rating = el('span', 'pd-chip pd-chip-rating');
+            rating.append(icon('bi-star-fill'), document.createTextNode(` ${product.rating} / 5`));
+            chips.append(rating);
+        }
+        const stock = el('span', 'pd-chip');
+        stock.append(icon('bi-box-seam'), document.createTextNode(` Stok ${product.stock}`));
+        chips.append(stock);
+        info.append(chips);
+
+        const heading = el('h3', null, product.name);
+        heading.id = 'productDetailTitle';
+        info.append(heading);
+
+        const owner = el('p', 'pd-owner');
+        owner.append(icon('bi-shop-window'), document.createTextNode(` ${product.seller}`));
+        info.append(owner);
+
+        if (product.description) info.append(el('p', 'pd-desc', product.description));
+        const prices = buildPrices(product);
+        if (prices.childElementCount) info.append(prices);
+        info.append(buildSpecs(product));
+        return info;
     };
 
     // Aksi sewa di specsheet: atur jumlah (+ / −), lalu masukkan keranjang atau sewa langsung.
@@ -217,6 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const showProductDetail = async (url) => {
         detailModal.classList.add('open');
+        activeGallery = null;
         detailContent.replaceChildren();
         const loading = document.createElement('p');
         loading.className = 'hint';
@@ -229,62 +425,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const product = await response.json();
             detailContent.replaceChildren();
 
-            const heading = document.createElement('h3');
-            heading.id = 'productDetailTitle';
-            heading.textContent = product.name;
-            detailContent.append(heading);
-
-            if (product.image) {
-                const image = document.createElement('img');
-                image.className = 'detail-photo';
-                image.src = product.image;
-                image.alt = product.name;
-                detailContent.append(image);
-            }
-
-            addDetailText(detailContent, 'Merek', product.brand);
-            addDetailText(detailContent, 'Kategori', product.category);
-            addDetailText(detailContent, 'Pemilik', product.seller);
-            addDetailText(detailContent, 'Rating', product.rating ? `${product.rating} / 5` : null);
-            addDetailText(detailContent, 'Deskripsi', product.description);
-            addDetailText(detailContent, 'Stok tersedia', product.stock);
-
-            const prices = document.createElement('div');
-            prices.className = 'detail-price-box';
-            [
-                ['Sewa / hari', product.price_per_day],
-                ['Sewa / 12 jam', product.price_per_half_day],
-            ].forEach(([label, price]) => {
-                if (!price || price <= 0) return;
-                const item = document.createElement('div');
-                item.className = 'dp-item';
-                const title = document.createElement('span');
-                title.textContent = label;
-                const amount = document.createElement('b');
-                amount.textContent = `Rp ${Number(price).toLocaleString('id-ID')}`;
-                item.append(title, amount);
-                prices.append(item);
-            });
-            if (prices.childElementCount) detailContent.append(prices);
-
-            const specsHeading = document.createElement('h4');
-            specsHeading.textContent = 'Spesifikasi';
-            detailContent.append(specsHeading);
-            if (product.specs?.length) {
-                const specs = document.createElement('ul');
-                specs.className = 'product-spec-list';
-                product.specs.forEach(spec => {
-                    const item = document.createElement('li');
-                    item.textContent = spec;
-                    specs.append(item);
-                });
-                detailContent.append(specs);
-            } else {
-                const empty = document.createElement('p');
-                empty.className = 'hint';
-                empty.textContent = 'Spesifikasi belum tersedia.';
-                detailContent.append(empty);
-            }
+            const layout = el('div', 'pd-layout');
+            layout.append(buildGallery(product), buildInfo(product));
+            detailContent.append(layout);
             detailContent.append(buildRentActions(product));
         } catch (error) {
             detailContent.replaceChildren();
@@ -306,7 +449,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === detailModal) detailModal.classList.remove('open');
     });
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape') detailModal.classList.remove('open');
+        if (event.key === 'Escape') {
+            // Esc menutup foto zoom dulu, baru modal.
+            if (!lightbox.hidden) closeLightbox();
+            else detailModal.classList.remove('open');
+            return;
+        }
+        if (!detailModal.classList.contains('open') || !activeGallery || activeGallery.count < 2) return;
+        if (event.target.closest('input, textarea, select')) return;
+        if (event.key === 'ArrowLeft') activeGallery.move(-1);
+        if (event.key === 'ArrowRight') activeGallery.move(1);
     });
 
 });

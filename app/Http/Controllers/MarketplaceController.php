@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Services\CartService;
+use App\Support\ProductGallery;
+use App\Support\SpecSheet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -71,6 +73,8 @@ class MarketplaceController extends Controller
         // Sinyal "dilihat" untuk rekomendasi checkout.
         $cart->recordView($product);
 
+        $sheet = SpecSheet::parse($product->specs->pluck('spec_text'));
+
         return response()->json([
             'id' => $product->id,
             'name' => $product->name,
@@ -84,6 +88,9 @@ class MarketplaceController extends Controller
             'category' => $product->category?->name,
             'seller' => $product->seller?->name ?? 'CamRent (Vendor)',
             'specs' => $product->specs->pluck('spec_text'),
+            'spec_rows' => $sheet['rows'],
+            'spec_features' => $sheet['features'],
+            'images' => ProductGallery::for($product),
             'cart_add_url' => route('cart.add', $product),
         ]);
     }
@@ -101,7 +108,7 @@ class MarketplaceController extends Controller
             'price_rent' => 'required|numeric|min:1',
             'stock'      => 'nullable|integer|min:1|max:99',
             'desc'       => 'nullable|string',
-            'photos'     => 'required|array|min:1',
+            'photos'     => 'required|array|min:1|max:'.(ProductGallery::MAX_EXTRA + 1),
             'photos.*'   => 'image|mimes:jpg,jpeg,png,webp|max:4096',
         ], [
             'price_rent.required' => 'Isi harga sewa per hari.',
@@ -121,7 +128,7 @@ class MarketplaceController extends Controller
             ['icon' => 'bi-box-seam']
         );
 
-        Product::create([
+        $product = Product::create([
             'seller_id'          => Auth::id(),
             'category_id'        => $category->id,
             'name'               => $request->name,
@@ -134,6 +141,9 @@ class MarketplaceController extends Controller
             'stock'              => (int) ($request->stock ?: 1),
             'status'             => 'Menunggu Verifikasi',
         ]);
+
+        // Foto ke-2 dst. disimpan sebagai sudut tambahan di galeri specsheet.
+        ProductGallery::storeExtras($product, array_slice($paths, 1));
 
         return redirect()->route('marketplace')
             ->with('success', 'Barang berhasil diajukan! Setelah diverifikasi, alatmu tayang di marketplace untuk disewa.');
