@@ -97,6 +97,53 @@
             }, 3500);
         },
 
+        confirm(message, title = 'Konfirmasi') {
+            return new Promise(resolve => {
+                const dialog = document.createElement('dialog');
+                dialog.className = 'confirm-dialog glass-strong';
+                dialog.setAttribute('aria-label', title);
+
+                const icon = document.createElement('i');
+                icon.className = 'bi bi-exclamation-circle-fill confirm-dialog-icon';
+                icon.setAttribute('aria-hidden', 'true');
+
+                const heading = document.createElement('h2');
+                heading.textContent = title;
+                const text = document.createElement('p');
+                text.className = 'confirm-dialog-message';
+                text.textContent = message;
+
+                const content = document.createElement('div');
+                content.className = 'confirm-dialog-content';
+                content.append(heading, text);
+
+                const cancelButton = document.createElement('button');
+                cancelButton.type = 'button';
+                cancelButton.className = 'btn btn-secondary';
+                cancelButton.textContent = 'Batal';
+                cancelButton.addEventListener('click', () => dialog.close('cancel'));
+
+                const confirmButton = document.createElement('button');
+                confirmButton.type = 'button';
+                confirmButton.className = 'btn btn-danger';
+                confirmButton.textContent = 'Hapus';
+                confirmButton.addEventListener('click', () => dialog.close('confirm'));
+
+                const actions = document.createElement('div');
+                actions.className = 'confirm-dialog-actions';
+                actions.append(cancelButton, confirmButton);
+                content.append(actions);
+                dialog.append(icon, content);
+                dialog.addEventListener('close', () => {
+                    resolve(dialog.returnValue === 'confirm');
+                    dialog.remove();
+                }, { once: true });
+
+                document.body.append(dialog);
+                dialog.showModal();
+            });
+        },
+
         async request(url, method = 'POST', body = null) {
             const response = await fetch(url, {
                 method,

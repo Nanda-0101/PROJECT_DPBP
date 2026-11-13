@@ -187,6 +187,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function confirmDelete(item) {
+        window.CamRent.confirm(`Hapus ${item.dataset.name} dari keranjang?`, 'Hapus alat?')
+            .then(confirmed => {
+                if (confirmed) deleteItem(item);
+            });
+    }
+
     list.addEventListener('click', event => {
         const item = event.target.closest('[data-cart-item]');
         if (!item) return;
@@ -195,12 +202,12 @@ document.addEventListener('DOMContentLoaded', () => {
             changeQuantity(item, qtyOf(item) + 1);
         } else if (event.target.closest('[data-qty-minus]')) {
             if (qtyOf(item) <= 1) {
-                if (confirm(`Hapus ${item.dataset.name} dari keranjang?`)) deleteItem(item);
+                confirmDelete(item);
             } else {
                 changeQuantity(item, qtyOf(item) - 1);
             }
         } else if (event.target.closest('[data-remove]')) {
-            if (confirm(`Hapus ${item.dataset.name} dari keranjang?`)) deleteItem(item);
+            confirmDelete(item);
         }
     });
 
