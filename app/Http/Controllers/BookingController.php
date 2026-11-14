@@ -80,6 +80,18 @@ class BookingController extends Controller
             'selected.required' => 'Pilih minimal satu alat untuk disewa.',
         ]);
 
+        // === PERBAIKAN: Normalisasi payment_method ke ENUM DB (Cash/Transfer/QRIS) ===
+        // Input dari form bisa berupa kode bank (BNI/BCA/...) atau metode standar.
+        // Kolom `payment_method` di tabel `bookings` hanya menerima salah satu dari:
+        // 'Cash', 'Transfer', 'QRIS'. Jadi kita petakan dulu.
+        $selectedMethodKey = (string) $request->payment_method;
+        [$dbPaymentMethod, $paymentChannel] = $this->resolvePaymentMethod($selectedMethodKey);
+
+        // Ambil metadata asli dari PaymentMethods supaya kita tetap bisa menampilkan
+        // detail bank (nomor rekening, nama pemilik) di ringkasan pembayaran.
+        $methodMeta = PaymentMethods::find($selectedMethodKey);
+        $methodLabel = $methodMeta['label'] ?? $selectedMethodKey;
+
         // Jumlah selalu diambil dari keranjang di server, bukan dari form.
         $cartQty = $this->cart->raw();
         $ids = collect($request->input('selected'))->map(fn ($id) => (int) $id)->unique()->sort()->values()->all();
@@ -93,7 +105,7 @@ class BookingController extends Controller
         $start = Carbon::parse($request->start_date);
         $end   = Carbon::parse($request->end_date);
 
-        $result = DB::transaction(function () use ($request, $ids, $cartQty, $start, $end) {
+        $result = DB::transaction(function () use ($request, $ids, $cartQty, $start, $end, $dbPaymentMethod) {
             // Kunci produk berurutan berdasarkan id supaya aman dari deadlock.
             $products = Product::query()
                 ->whereIn('id', $ids)
@@ -143,7 +155,7 @@ class BookingController extends Controller
                     'end_date'       => $end->toDateString(),
                     'duration_label' => $groupRows->first()['duration'],
                     'payment_type'   => $request->payment_type,
-                    'payment_method' => $request->payment_method,
+                    'payment_method' => $dbPaymentMethod, // <-- nilai ENUM valid
                     'guarantee'      => $request->guarantee,
                     'total_amount'   => $total,
                     'paid_amount'    => $paidNow,
@@ -185,12 +197,15 @@ class BookingController extends Controller
 
         $codes = collect($bookings)->pluck('code');
         session()->flash('payment_summary', [
-            'codes'    => $codes->all(),
-            'method'   => $request->payment_method,
-            'type'     => $request->payment_type,
-            'total'    => (float) collect($bookings)->sum('total_amount'),
-            'pay_now'  => (float) collect($bookings)->sum('paid_amount'),
-            'phone'    => $request->renter_phone,
+            'codes'           => $codes->all(),
+            'method'          => $dbPaymentMethod,        // ENUM (Cash/Transfer/QRIS)
+            'method_key'      => $selectedMethodKey,      // kode asli (mis. 'bni')
+            'method_label'    => $methodLabel,            // label manusiawi (mis. 'Transfer BNI')
+            'payment_channel' => $paymentChannel,         // nama bank / null
+            'type'            => $request->payment_type,
+            'total'           => (float) collect($bookings)->sum('total_amount'),
+            'pay_now'         => (float) collect($bookings)->sum('paid_amount'),
+            'phone'           => $request->renter_phone,
         ]);
 
         $label = $codes->count() > 1
@@ -199,6 +214,41 @@ class BookingController extends Controller
 
         return redirect()->route('dashboard')
             ->with('success', $label.' Menunggu konfirmasi mitra.');
+    }
+
+    /**
+     * Petakan key metode pembayaran dari form (mis. 'bni', 'bca', 'qris', 'cash')
+     * ke nilai ENUM `payment_method` di tabel bookings, plus channel opsional.
+     *
+     * @return array{0: string, 1: ?string} [db_payment_method, payment_channel]
+     */
+    private function resolvePaymentMethod(string $key): array
+    {
+        $key = strtolower(trim($key));
+
+        // Daftar bank yang dianggap sebagai "Transfer"
+        $banks = [
+            'bni'     => 'BNI',
+            'bca'     => 'BCA',
+            'bri'     => 'BRI',
+            'mandiri' => 'Mandiri',
+            'bsi'     => 'BSI',
+            'btn'     => 'BTN',
+            'cimb'    => 'CIMB Niaga',
+            'permata' => 'Permata',
+        ];
+
+        if (isset($banks[$key])) {
+            return ['Transfer', $banks[$key]];
+        }
+
+        // Metode standar lain
+        return match ($key) {
+            'qris'     => ['QRIS', 'QRIS'],
+            'cash'     => ['Cash', null],
+            'transfer' => ['Transfer', null],
+            default    => ['Transfer', null], // fallback aman, tidak akan truncate
+        };
     }
 
     /** @return array{0: string, 1: int|float} [label durasi, harga per unit untuk durasi itu] */
