@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -26,6 +27,13 @@ Route::post('/mitra',      [MitraController::class, 'store'])->name('mitra.store
 Route::get('/cs',          [CsController::class, 'index'])->name('cs');
 Route::post('/cs',         [CsController::class, 'store'])->name('cs.store');
 
+// ==== Keranjang sewa (tamu & akun login) ====
+Route::get('/keranjang',                    [CartController::class, 'index'])->name('cart.index');
+Route::post('/keranjang/checkout',          [CartController::class, 'checkout'])->name('cart.checkout');
+Route::post('/keranjang/tambah/{product}',  [CartController::class, 'add'])->name('cart.add');
+Route::patch('/keranjang/{product}',        [CartController::class, 'update'])->name('cart.update');
+Route::delete('/keranjang/{product}',       [CartController::class, 'remove'])->name('cart.remove');
+
 // ==== Auth ====
 Route::get('/login',    [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login',   [AuthController::class, 'login'])->name('login.attempt');
@@ -34,9 +42,8 @@ Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 
 // ==== Marketplace ====
 Route::middleware('camrent.auth')->group(function () {
-    Route::post('/marketplace/sell',          [MarketplaceController::class, 'sell'])->name('marketplace.sell');
+    Route::post('/marketplace/sewakan',       [MarketplaceController::class, 'rentOut'])->name('marketplace.rent-out');
 });
-Route::post('/marketplace/buy/{product}', [MarketplaceController::class, 'buy'])->name('marketplace.buy');
 
 // Dashboard can show the current guest session or the signed-in account.
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

@@ -1,35 +1,36 @@
 <footer class="footer">
-  <div class="app-container">
-    <div class="footer-grid">
-      <div class="footer-col" style="max-width:260px;">
-        <div class="brand" style="margin-bottom:10px;">
+  <div class="footer-main">
+    <div class="app-container footer-content">
+      <div class="footer-brand-block">
+        <a href="{{ route('home') }}" class="brand footer-brand">
           <span class="brand-mark"><i class="bi bi-camera-reels-fill"></i></span>
           <span>CamRent</span>
+        </a>
+        <p class="footer-description">Platform sewa peralatan kreatif — kamera, lensa, lighting, audio, hingga gimbal, dengan keranjang sewa dan pembayaran online yang aman.</p>
+      </div>
+
+      <div class="footer-social" aria-label="Ikuti kami">
+        <span class="footer-social-label">Ikuti kami</span>
+        <div class="footer-social-links">
+          <span aria-label="Instagram"><i class="bi bi-instagram"></i></span>
+          <span aria-label="TikTok"><i class="bi bi-tiktok"></i></span>
+          <span aria-label="YouTube"><i class="bi bi-youtube"></i></span>
         </div>
-        <p>Platform sewa & jual-beli peralatan kreatif — kamera, lensa, lighting, audio, hingga gimbal, dengan booking dan pembayaran online yang aman.</p>
       </div>
-      <div class="footer-col">
-        <h5>Layanan</h5>
-        <a href="{{ route('marketplace') }}">Marketplace</a>
-        <a href="{{ route('booking') }}">Booking Kamera</a>
+
+      <nav class="footer-nav" aria-label="Navigasi footer">
+        <a href="{{ route('marketplace') }}">Catalog</a>
+        <a href="{{ route('cart.index') }}">Keranjang Sewa</a>
         <a href="{{ route('mitra.index') }}">Daftar Jadi Mitra</a>
-      </div>
-      <div class="footer-col">
-        <h5>Dukungan</h5>
         <a href="{{ route('cs') }}">Pusat Bantuan (CS)</a>
         <a href="{{ route('cs') }}#faq">FAQ</a>
         <a href="{{ route('dashboard') }}">Status Pesanan</a>
-      </div>
-      <div class="footer-col">
-        <h5>Ikuti kami</h5>
-        <div style="display:flex;gap:12px;font-size:1.2rem;color:var(--muted);">
-          <i class="bi bi-instagram"></i>
-          <i class="bi bi-tiktok"></i>
-          <i class="bi bi-youtube"></i>
-        </div>
-      </div>
+      </nav>
+
     </div>
-    <div class="footer-bottom">
+  </div>
+  <div class="footer-bottom">
+    <div class="app-container footer-bottom-inner">
       <span>© 2026 CamRent. Seluruh hak cipta dilindungi.</span>
       <span>Dibuat untuk kreator Indonesia 🇮🇩</span>
     </div>

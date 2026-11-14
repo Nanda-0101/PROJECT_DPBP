@@ -57,7 +57,7 @@ class DashboardController extends Controller
             abort(403);
         }
 
-        $updated = DB::transaction(function () use ($booking, $status, $user) {
+        $updated = DB::transaction(function () use ($booking, $status) {
             $booking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
             $transitions = [
                 'Menunggu Konfirmasi' => ['Dikonfirmasi', 'Ditolak'],
@@ -66,21 +66,6 @@ class DashboardController extends Controller
 
             if (!in_array($status, $transitions[$booking->status] ?? [], true)) {
                 return false;
-            }
-
-            if ($status === 'Ditolak' && $booking->type === 'Pembelian') {
-                $items = $booking->items()->with('product')->get()->groupBy('product_id');
-                foreach ($items as $productItems) {
-                    $product = $productItems->first()->product;
-                    if (!$product || (int) $product->seller_id !== (int) $user->id) {
-                        continue;
-                    }
-
-                    $product->increment('stock', (int) $productItems->sum('qty'));
-                    if ($product->status === 'Habis') {
-                        $product->update(['status' => 'Aktif']);
-                    }
-                }
             }
 
             $booking->update(['status' => $status]);

@@ -2,6 +2,7 @@
 
 @section('page', 'dashboard')
 @section('title', 'Dashboard · CamRent')
+@section('breadcrumb', 'Dashboard')
 
 @section('content')
 <section class="app-container dash-wrap">
@@ -22,8 +23,12 @@
     @endif
   </div>
 
+  @if(session('payment_summary'))
+    @include('partials.payment-summary', ['summary' => session('payment_summary')])
+  @endif
+
   <div class="dash-tabs">
-    <div class="dash-tab active" data-tab="riwayat"><i class="bi bi-clock-history"></i> Riwayat Sewa & Beli</div>
+    <div class="dash-tab active" data-tab="riwayat"><i class="bi bi-clock-history"></i> Riwayat Sewa</div>
     @if($isMitra)
       <div class="dash-tab" data-tab="toko"><i class="bi bi-shop"></i> Toko Saya</div>
     @endif
@@ -35,18 +40,24 @@
   {{-- RIWAYAT --}}
   <div class="dash-panel" id="panelRiwayat">
     <div class="section-head" style="margin-bottom:14px;">
-      <h3 style="font-size:1.2rem;"><i class="bi bi-clock-history gradient-text"></i> Riwayat Sewa & Pembelian</h3>
+      <h3 style="font-size:1.2rem;"><i class="bi bi-clock-history gradient-text"></i> Riwayat Sewa</h3>
     </div>
     @forelse($bookings as $b)
-      @php $item = $b->items->first(); @endphp
       <div class="order-item">
-        <div class="order-icon"><i class="bi {{ $b->type === 'Pembelian' ? 'bi-bag-check' : 'bi-camera-reels' }}"></i></div>
+        <div class="order-icon"><i class="bi bi-camera-reels"></i></div>
         <div class="order-info">
-          <div class="oi-title">{{ $item->product_name_snap ?? '-' }} <span class="hint">· {{ $b->code }}</span></div>
+          <div class="oi-title">{{ $b->items->first()->product_name_snap ?? '-' }}
+            @if($b->items->count() > 1)<span class="tag">+{{ $b->items->count() - 1 }} alat lain</span>@endif
+            <span class="hint">· {{ $b->code }}</span></div>
+          <div class="oi-items">
+            @foreach($b->items as $it)
+              <span class="tag">{{ $it->product_name_snap }} ×{{ $it->qty }}</span>
+            @endforeach
+          </div>
           <div class="oi-meta">
             {{ $b->start_date->format('d M Y') }}
             @if($b->end_date->ne($b->start_date)) – {{ $b->end_date->format('d M Y') }} @endif
-            · {{ $b->duration_label }} · {{ $b->payment_method }}
+            · {{ $b->duration_label }} · {{ \App\Support\PaymentMethods::label($b->payment_method) }}
           </div>
         </div>
         <div class="order-price">
@@ -62,9 +73,9 @@
     @empty
       <div class="empty-state">
         <i class="bi bi-inbox"></i>
-        <p>Belum ada riwayat sewa atau pembelian.</p>
-        <a href="{{ route('booking') }}" class="btn btn-primary" style="margin-top:10px;">Booking sekarang</a>
-        <a href="{{ route('marketplace') }}" class="btn btn-secondary" style="margin-top:10px;">Lihat Marketplace</a>
+        <p>Belum ada riwayat sewa.</p>
+        <a href="{{ route('marketplace') }}" class="btn btn-primary" style="margin-top:10px;">Sewa sekarang</a>
+        <a href="{{ route('cart.index') }}" class="btn btn-secondary" style="margin-top:10px;">Lihat Keranjang</a>
       </div>
     @endforelse
   </div>
@@ -73,14 +84,20 @@
   @if($isMitra)
     <div class="dash-panel" id="panelToko" style="display:none;">
       <div class="section-head" style="margin-bottom:14px;">
-        <h3 style="font-size:1.2rem;"><i class="bi bi-shop gradient-text"></i> Pesanan Masuk ke Toko Saya</h3>
+        <h3 style="font-size:1.2rem;"><i class="bi bi-shop gradient-text"></i> Pesanan Sewa Masuk ke Toko Saya</h3>
       </div>
       @forelse($myOrders as $b)
-        @php $item = $b->items->first(); @endphp
         <div class="order-item">
           <div class="order-icon"><i class="bi bi-person-check"></i></div>
           <div class="order-info">
-            <div class="oi-title">{{ $item->product_name_snap }} <span class="hint">· {{ $b->code }}</span></div>
+            <div class="oi-title">{{ $b->items->first()->product_name_snap }}
+              @if($b->items->count() > 1)<span class="tag">+{{ $b->items->count() - 1 }} alat lain</span>@endif
+              <span class="hint">· {{ $b->code }}</span></div>
+            <div class="oi-items">
+              @foreach($b->items as $it)
+                <span class="tag">{{ $it->product_name_snap }} ×{{ $it->qty }}</span>
+              @endforeach
+            </div>
             <div class="oi-meta">Penyewa: {{ $b->user->name ?? '-' }} · {{ $b->user->phone ?? '-' }} · {{ $b->start_date->format('d M Y') }}</div>
           </div>
           <div class="order-price">
@@ -111,7 +128,7 @@
 
       <div class="section-head" style="margin:30px 0 14px;">
         <h3 style="font-size:1.2rem;"><i class="bi bi-box-seam gradient-text"></i> Produk Saya</h3>
-        <a href="{{ route('marketplace') }}" class="link-more">Tambah produk <i class="bi bi-arrow-right"></i></a>
+        <a href="{{ route('marketplace') }}" class="link-more">Sewakan alat <i class="bi bi-arrow-right"></i></a>
       </div>
       <div class="dash-product-grid">
         @forelse($myProducts as $p)
@@ -120,7 +137,7 @@
             <div class="pc-name">{{ $p->name }}</div>
             <div class="hint">{{ $p->category->name ?? '-' }} · Stok {{ $p->stock }}</div>
             <div class="pc-price-row">
-              <b>{{ $p->price_per_day ? 'Rp '.number_format($p->price_per_day,0,',','.').'/hari' : 'Rp '.number_format($p->price_sale,0,',','.') }}</b>
+              <b>{{ 'Rp '.number_format($p->price_per_day,0,',','.').'/hari' }}</b>
             </div>
           </div>
         @empty

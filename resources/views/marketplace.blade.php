@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
 @section('page', 'marketplace')
-@section('title', 'Marketplace · CamRent')
+@section('title', 'Catalog · CamRent')
+@section('breadcrumb', 'Catalog')
 
 @section('content')
-<header class="section" style="padding-bottom:20px;">
+<header class="page-head">
   <div class="app-container">
-    <span class="eyebrow badge badge-buy"><i class="bi bi-shop"></i> Marketplace</span>
-    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Sewa atau beli peralatan kreatif</h1>
-    <p style="max-width:600px;">Semua alat dari mitra terpercaya. Ingin menjual alatmu sendiri? Klik "Jual Barang Saya".</p>
+    <h1>Sewa peralatan kreatif</h1>
+    <p>Pilih alat dari mitra terpercaya, masukkan ke keranjang, lalu sewa sekaligus dalam satu kali checkout.</p>
   </div>
 </header>
 
@@ -36,12 +36,12 @@
       <option value="rating"     @selected($sort === 'rating')>Rating tertinggi</option>
     </select>
     @auth
-      <button type="button" class="btn btn-primary" onclick="document.getElementById('modalJual').classList.add('open')">
-        <i class="bi bi-plus-circle"></i> Jual Barang Saya
+      <button type="button" class="btn btn-outline" onclick="document.getElementById('modalSewakan').classList.add('open')">
+        <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
       </button>
     @else
-      <a href="{{ route('login') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Jual Barang Saya
+      <a href="{{ route('login') }}" class="btn btn-outline">
+        <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
       </a>
     @endauth
   </form>
@@ -54,11 +54,20 @@
     @endforeach
   </div>
 
-  <div class="product-grid mp-grid" style="margin-top:22px;">
+  <div class="mp-result-bar">
+    <div class="mp-result-info">
+      <p class="mp-result-count"><b>{{ $products->count() }} alat</b> tersedia untuk disewa{{ $category ? ' · '.$category : '' }}</p>
+      <p class="mp-result-tip"><i class="bi bi-lightbulb"></i> Klik foto atau nama alat untuk melihat specsheet</p>
+    </div>
+  </div>
+
+  <div class="product-grid mp-grid">
     @forelse($products as $p)
-      <div class="product-card {{ $highlight == $p->id ? 'highlighted' : '' }}">
-        @include('partials.product-card', ['p' => $p, 'buyOnPage' => true])
-      </div>
+      @include('partials.product-card', [
+        'p' => $p,
+        'onMarketplace' => true,
+        'highlight' => $highlight == $p->id ? 'highlighted' : '',
+      ])
     @empty
       <div class="empty-state" style="grid-column:1/-1;">
         <i class="bi bi-search"></i>
@@ -81,45 +90,15 @@
   </section>
 </div>
 
-{{-- MODAL: Konfirmasi Beli --}}
-<div class="modal-backdrop" id="modalBuy">
+{{-- MODAL: Sewakan Barang --}}
+<div class="modal-backdrop" id="modalSewakan">
   <div class="modal-box glass-strong">
-    <button type="button" class="modal-close" onclick="document.getElementById('modalBuy').classList.remove('open')">
+    <button type="button" class="modal-close" onclick="document.getElementById('modalSewakan').classList.remove('open')">
       <i class="bi bi-x-lg"></i>
     </button>
-    <h3 style="margin-bottom:6px;"><i class="bi bi-cart-check gradient-text"></i> Konfirmasi Pembelian</h3>
-    <p style="margin-bottom:18px;">Lengkapi data berikut untuk menyelesaikan pembelian.</p>
-    <form id="buyForm" method="POST" action="">
-      @csrf
-      <input type="hidden" id="buyProductId" name="product_id">
-      <div id="buySummary" class="tag" style="display:block;padding:12px 14px;margin-bottom:16px;font-size:.9rem;"></div>
-      <div class="field"><label>Nama pembeli</label><input required name="name" class="input" placeholder="Nama lengkap"></div>
-      <div class="field"><label>No. HP / WhatsApp</label><input required name="phone" class="input" placeholder="08xxxxxxxxxx"></div>
-      <div class="field"><label>Alamat pengiriman</label><textarea required name="address" class="input" rows="2"></textarea></div>
-      <div class="field">
-        <label>Metode pembayaran</label>
-        <div style="display:flex;gap:10px;">
-          <label class="radio-card" style="flex:1;"><input type="radio" name="payment" value="Transfer" checked> Transfer</label>
-          <label class="radio-card" style="flex:1;"><input type="radio" name="payment" value="QRIS"> QRIS</label>
-          <label class="radio-card" style="flex:1;"><input type="radio" name="payment" value="Cash"> COD</label>
-        </div>
-      </div>
-      <button type="submit" class="btn btn-primary btn-block">
-        <i class="bi bi-check-circle"></i> Selesaikan Pembelian
-      </button>
-    </form>
-  </div>
-</div>
-
-{{-- MODAL: Jual Barang --}}
-<div class="modal-backdrop" id="modalJual">
-  <div class="modal-box glass-strong">
-    <button type="button" class="modal-close" onclick="document.getElementById('modalJual').classList.remove('open')">
-      <i class="bi bi-x-lg"></i>
-    </button>
-    <h3 style="margin-bottom:6px;"><i class="bi bi-tag gradient-text"></i> Jual Barang Saya</h3>
-    <p style="margin-bottom:18px;">Isi detail alat yang ingin dijual atau disewakan.</p>
-    <form method="POST" action="{{ route('marketplace.sell') }}" enctype="multipart/form-data">
+    <h3 style="margin-bottom:6px;"><i class="bi bi-tag gradient-text"></i> Sewakan Barang Saya</h3>
+    <p style="margin-bottom:18px;">Isi detail alat yang ingin kamu sewakan ke kreator lain.</p>
+    <form method="POST" action="{{ route('marketplace.rent-out') }}" enctype="multipart/form-data">
       @csrf
       <div class="field"><label>Nama barang</label><input required name="name" class="input" placeholder="Contoh: Nikon Z6 II"></div>
       <div class="field"><label>Kategori</label>
@@ -129,9 +108,9 @@
           @endforeach
         </select>
       </div>
-      <div style="display:flex;gap:12px;">
-        <div class="field" style="flex:1;"><label>Harga jual (Rp)</label><input type="number" min="0" name="price_sale" class="input" placeholder="0"></div>
-        <div class="field" style="flex:1;"><label>Harga sewa/hari (Rp)</label><input type="number" min="0" name="price_rent" class="input" placeholder="0"></div>
+      <div class="responsive-field-row" style="display:flex;gap:12px;">
+        <div class="field" style="flex:2;"><label>Harga sewa/hari (Rp)</label><input required type="number" min="1" name="price_rent" class="input" placeholder="0"></div>
+        <div class="field" style="flex:1;"><label>Jumlah unit</label><input type="number" min="1" max="99" name="stock" value="1" class="input"></div>
       </div>
       <div class="field"><label>Deskripsi kondisi barang</label><textarea name="desc" class="input" rows="3"></textarea></div>
       <div class="field">
@@ -140,7 +119,7 @@
         <div class="hint"><i class="bi bi-info-circle"></i> Unggah minimal 1 foto asli.</div>
       </div>
       <button type="submit" class="btn btn-primary btn-block">
-        <i class="bi bi-upload"></i> Tayangkan Barang
+        <i class="bi bi-upload"></i> Tayangkan untuk Disewa
       </button>
     </form>
   </div>
@@ -153,20 +132,287 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailModal = document.getElementById('modalProductDetail');
     const detailContent = document.getElementById('productDetailContent');
 
-    const addDetailText = (container, label, value) => {
-        if (value === null || value === undefined || value === '') return;
-        const row = document.createElement('div');
-        row.className = 'product-detail-row';
-        const title = document.createElement('b');
-        title.textContent = label;
-        const text = document.createElement('span');
-        text.textContent = value;
-        row.append(title, text);
-        container.append(row);
+    const el = (tag, className, text) => {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined && text !== null) node.textContent = text;
+        return node;
+    };
+    const icon = (name) => {
+        const i = document.createElement('i');
+        i.className = `bi ${name}`;
+        return i;
+    };
+    const iconButton = (className, label, iconName) => {
+        const button = el('button', className);
+        button.type = 'button';
+        button.setAttribute('aria-label', label);
+        button.append(icon(iconName));
+        return button;
+    };
+
+    // ---- Lightbox: foto penuh tanpa terpotong ----
+    const lightbox = el('div', 'pd-lightbox');
+    lightbox.hidden = true;
+    const lightboxImage = el('img', 'pd-lightbox-img');
+    const lightboxClose = iconButton('pd-lightbox-close', 'Tutup foto', 'bi-x-lg');
+    lightbox.append(lightboxImage, lightboxClose);
+    document.body.append(lightbox);
+    const closeLightbox = () => { lightbox.hidden = true; };
+    lightbox.addEventListener('click', closeLightbox);
+
+    // ---- Galeri foto (beberapa sudut) ----
+    let activeGallery = null;
+
+    const buildGallery = (product) => {
+        const images = product.images?.length
+            ? product.images
+            : (product.image ? [{ url: product.image, label: 'Tampak utama' }] : []);
+
+        const gallery = el('div', 'pd-gallery');
+        const stage = el('div', 'pd-stage');
+        gallery.append(stage);
+
+        if (!images.length) {
+            stage.classList.add('pd-stage-empty');
+            stage.append(icon('bi-image'), el('span', null, 'Foto belum tersedia'));
+            activeGallery = null;
+            return gallery;
+        }
+
+        let index = 0;
+        const image = el('img', 'pd-stage-img');
+        const empty = el('div', 'pd-stage-fallback');
+        empty.hidden = true;
+        empty.append(icon('bi-image'), el('span', null, 'Foto tidak dapat dimuat'));
+        image.addEventListener('error', () => { image.hidden = true; empty.hidden = false; });
+        image.addEventListener('load', () => { image.hidden = false; empty.hidden = true; });
+
+        const angle = el('span', 'pd-angle');
+        const counter = el('span', 'pd-counter');
+        const zoom = iconButton('pd-zoom', 'Perbesar foto', 'bi-arrows-fullscreen');
+        stage.append(image, empty, angle, counter, zoom);
+
+        const thumbButtons = [];
+        const show = (next) => {
+            index = (next + images.length) % images.length;
+            const current = images[index];
+            image.hidden = false;
+            empty.hidden = true;
+            image.src = current.url;
+            image.alt = `${product.name} — ${current.label}`;
+            angle.textContent = current.label;
+            counter.textContent = `${index + 1} / ${images.length}`;
+            counter.hidden = images.length < 2;
+            thumbButtons.forEach((thumb, i) => {
+                const active = i === index;
+                thumb.classList.toggle('active', active);
+                thumb.setAttribute('aria-current', active ? 'true' : 'false');
+                if (active) thumb.scrollIntoView({ block: 'nearest', inline: 'center' });
+            });
+        };
+
+        const openZoom = () => {
+            lightboxImage.src = images[index].url;
+            lightboxImage.alt = image.alt;
+            lightbox.hidden = false;
+        };
+        image.addEventListener('click', openZoom);
+        zoom.addEventListener('click', openZoom);
+
+        if (images.length > 1) {
+            const prev = iconButton('pd-nav pd-prev', 'Foto sebelumnya', 'bi-chevron-left');
+            const next = iconButton('pd-nav pd-next', 'Foto berikutnya', 'bi-chevron-right');
+            prev.addEventListener('click', () => show(index - 1));
+            next.addEventListener('click', () => show(index + 1));
+            stage.append(prev, next);
+
+            // geser kiri/kanan di layar sentuh
+            let startX = null;
+            stage.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+            stage.addEventListener('touchend', e => {
+                if (startX === null) return;
+                const delta = e.changedTouches[0].clientX - startX;
+                if (Math.abs(delta) > 40) show(index + (delta < 0 ? 1 : -1));
+                startX = null;
+            });
+
+            const strip = el('div', 'pd-thumbs');
+            images.forEach((item, i) => {
+                const thumb = el('button', 'pd-thumb');
+                thumb.type = 'button';
+                thumb.title = item.label;
+                thumb.setAttribute('aria-label', `Lihat ${item.label}`);
+                const picture = el('img');
+                picture.src = item.url;
+                picture.alt = '';
+                picture.loading = 'lazy';
+                thumb.append(picture);
+                thumb.addEventListener('click', () => show(i));
+                thumbButtons.push(thumb);
+                strip.append(thumb);
+            });
+            gallery.append(strip);
+        } else {
+            gallery.append(el('p', 'pd-photo-hint', 'Klik foto untuk memperbesar.'));
+        }
+
+        show(0);
+        activeGallery = { show, move: (step) => show(index + step), count: images.length };
+        return gallery;
+    };
+
+    // ---- Tabel spesifikasi ----
+    const buildSpecs = (product) => {
+        const wrap = el('section', 'pd-specs');
+        wrap.append(el('h4', null, 'Spesifikasi'));
+
+        const rows = [];
+        if (product.brand) rows.push({ label: 'Merek', value: product.brand });
+        (product.spec_rows ?? []).forEach(row => rows.push(row));
+        const features = product.spec_features ?? [];
+
+        if (!rows.length && !features.length) {
+            wrap.append(el('p', 'hint', 'Spesifikasi belum tersedia.'));
+            return wrap;
+        }
+
+        if (rows.length) {
+            const table = el('dl', 'spec-table');
+            rows.forEach(row => {
+                const line = el('div', 'spec-row');
+                line.append(el('dt', null, row.label), el('dd', null, row.value));
+                table.append(line);
+            });
+            wrap.append(table);
+        }
+        if (features.length) {
+            if (rows.length) wrap.append(el('h5', 'pd-sub', 'Fitur'));
+            const list = el('ul', 'product-spec-list');
+            features.forEach(text => list.append(el('li', null, text)));
+            wrap.append(list);
+        }
+        return wrap;
+    };
+
+    const buildPrices = (product) => {
+        const prices = el('div', 'detail-price-box');
+        [
+            ['Sewa / hari', product.price_per_day],
+            ['Sewa / 12 jam', product.price_per_half_day],
+        ].forEach(([label, price]) => {
+            if (!price || price <= 0) return;
+            const item = el('div', 'dp-item');
+            item.append(el('span', null, label), el('b', null, `Rp ${Number(price).toLocaleString('id-ID')}`));
+            prices.append(item);
+        });
+        return prices;
+    };
+
+    const buildInfo = (product) => {
+        const info = el('div', 'pd-info');
+
+        const chips = el('div', 'pd-chips');
+        if (product.category) chips.append(el('span', 'pd-chip', product.category));
+        if (product.rating) {
+            const rating = el('span', 'pd-chip pd-chip-rating');
+            rating.append(icon('bi-star-fill'), document.createTextNode(` ${product.rating} / 5`));
+            chips.append(rating);
+        }
+        const stock = el('span', 'pd-chip');
+        stock.append(icon('bi-box-seam'), document.createTextNode(` Stok ${product.stock}`));
+        chips.append(stock);
+        info.append(chips);
+
+        const heading = el('h3', null, product.name);
+        heading.id = 'productDetailTitle';
+        info.append(heading);
+
+        const owner = el('p', 'pd-owner');
+        owner.append(icon('bi-shop-window'), document.createTextNode(` ${product.seller}`));
+        info.append(owner);
+
+        if (product.description) info.append(el('p', 'pd-desc', product.description));
+        const prices = buildPrices(product);
+        if (prices.childElementCount) info.append(prices);
+        info.append(buildSpecs(product));
+        return info;
+    };
+
+    // Aksi sewa di specsheet: atur jumlah (+ / −), lalu masukkan keranjang atau sewa langsung.
+    const buildRentActions = (product) => {
+        const maxQty = Math.max(1, Number(product.stock) || 1);
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = product.cart_add_url;
+        form.className = 'js-cart-add detail-rent-actions';
+
+        const token = document.createElement('input');
+        token.type = 'hidden';
+        token.name = '_token';
+        token.value = window.CamRent.csrf;
+
+        const stepper = document.createElement('div');
+        stepper.className = 'qty-stepper';
+        const minus = document.createElement('button');
+        minus.type = 'button';
+        minus.setAttribute('aria-label', 'Kurangi jumlah');
+        minus.innerHTML = '<i class="bi bi-dash"></i>';
+        const qty = document.createElement('input');
+        qty.type = 'number';
+        qty.name = 'qty';
+        qty.value = 1;
+        qty.min = 1;
+        qty.max = maxQty;
+        qty.readOnly = true;
+        qty.setAttribute('aria-label', 'Jumlah unit disewa');
+        const plus = document.createElement('button');
+        plus.type = 'button';
+        plus.setAttribute('aria-label', 'Tambah jumlah');
+        plus.innerHTML = '<i class="bi bi-plus"></i>';
+        const sync = () => {
+            minus.disabled = Number(qty.value) <= 1;
+            plus.disabled = Number(qty.value) >= maxQty;
+        };
+        minus.addEventListener('click', () => { qty.value = Math.max(1, Number(qty.value) - 1); sync(); });
+        plus.addEventListener('click', () => { qty.value = Math.min(maxQty, Number(qty.value) + 1); sync(); });
+        sync();
+        stepper.append(minus, qty, plus);
+
+        const stockHint = document.createElement('span');
+        stockHint.className = 'hint';
+        stockHint.textContent = `Maks. ${maxQty} unit`;
+
+        const addButton = document.createElement('button');
+        addButton.type = 'submit';
+        addButton.className = 'btn btn-secondary';
+        addButton.innerHTML = '<i class="bi bi-cart-plus"></i> Masukkan Keranjang';
+
+        const rentNow = document.createElement('button');
+        rentNow.type = 'submit';
+        rentNow.name = 'rent_now';
+        rentNow.value = '1';
+        rentNow.dataset.noAjax = '';
+        rentNow.className = 'btn btn-primary';
+        rentNow.innerHTML = '<i class="bi bi-calendar-plus"></i> Sewa Sekarang';
+
+        const qtyRow = document.createElement('div');
+        qtyRow.className = 'detail-qty-row';
+        const qtyLabel = document.createElement('b');
+        qtyLabel.textContent = 'Jumlah';
+        qtyRow.append(qtyLabel, stepper, stockHint);
+
+        const buttons = document.createElement('div');
+        buttons.className = 'detail-rent-buttons';
+        buttons.append(addButton, rentNow);
+
+        form.append(token, qtyRow, buttons);
+        return form;
     };
 
     const showProductDetail = async (url) => {
         detailModal.classList.add('open');
+        activeGallery = null;
         detailContent.replaceChildren();
         const loading = document.createElement('p');
         loading.className = 'hint';
@@ -179,63 +425,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const product = await response.json();
             detailContent.replaceChildren();
 
-            const heading = document.createElement('h3');
-            heading.id = 'productDetailTitle';
-            heading.textContent = product.name;
-            detailContent.append(heading);
-
-            if (product.image) {
-                const image = document.createElement('img');
-                image.className = 'detail-photo';
-                image.src = product.image;
-                image.alt = product.name;
-                detailContent.append(image);
-            }
-
-            addDetailText(detailContent, 'Merek', product.brand);
-            addDetailText(detailContent, 'Kategori', product.category);
-            addDetailText(detailContent, 'Pemilik', product.seller);
-            addDetailText(detailContent, 'Rating', product.rating ? `${product.rating} / 5` : null);
-            addDetailText(detailContent, 'Deskripsi', product.description);
-            addDetailText(detailContent, 'Stok tersedia', product.stock);
-
-            const prices = document.createElement('div');
-            prices.className = 'detail-price-box';
-            [
-                ['Sewa / hari', product.price_per_day],
-                ['Sewa / 12 jam', product.price_per_half_day],
-                ['Harga jual', product.price_sale],
-            ].forEach(([label, price]) => {
-                if (!price || price <= 0) return;
-                const item = document.createElement('div');
-                item.className = 'dp-item';
-                const title = document.createElement('span');
-                title.textContent = label;
-                const amount = document.createElement('b');
-                amount.textContent = `Rp ${Number(price).toLocaleString('id-ID')}`;
-                item.append(title, amount);
-                prices.append(item);
-            });
-            if (prices.childElementCount) detailContent.append(prices);
-
-            const specsHeading = document.createElement('h4');
-            specsHeading.textContent = 'Spesifikasi';
-            detailContent.append(specsHeading);
-            if (product.specs?.length) {
-                const specs = document.createElement('ul');
-                specs.className = 'product-spec-list';
-                product.specs.forEach(spec => {
-                    const item = document.createElement('li');
-                    item.textContent = spec;
-                    specs.append(item);
-                });
-                detailContent.append(specs);
-            } else {
-                const empty = document.createElement('p');
-                empty.className = 'hint';
-                empty.textContent = 'Spesifikasi belum tersedia.';
-                detailContent.append(empty);
-            }
+            const layout = el('div', 'pd-layout');
+            layout.append(buildGallery(product), buildInfo(product));
+            detailContent.append(layout);
+            detailContent.append(buildRentActions(product));
         } catch (error) {
             detailContent.replaceChildren();
             const message = document.createElement('p');
@@ -256,29 +449,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === detailModal) detailModal.classList.remove('open');
     });
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape') detailModal.classList.remove('open');
+        if (event.key === 'Escape') {
+            // Esc menutup foto zoom dulu, baru modal.
+            if (!lightbox.hidden) closeLightbox();
+            else detailModal.classList.remove('open');
+            return;
+        }
+        if (!detailModal.classList.contains('open') || !activeGallery || activeGallery.count < 2) return;
+        if (event.target.closest('input, textarea, select')) return;
+        if (event.key === 'ArrowLeft') activeGallery.move(-1);
+        if (event.key === 'ArrowRight') activeGallery.move(1);
     });
 
-    const form = document.getElementById('buyForm');
-    const summary = document.getElementById('buySummary');
-
-    document.querySelectorAll('[data-buy-product]').forEach(button => {
-        button.addEventListener('click', () => {
-            form.action = button.dataset.buyUrl;
-            const name = document.createElement('b');
-            name.textContent = button.dataset.productName;
-            summary.replaceChildren(
-                name,
-                document.createTextNode(` — Rp ${button.dataset.productPrice}`)
-            );
-            document.getElementById('modalBuy').classList.add('open');
-        });
-    });
-
-    const requestedProduct = new URLSearchParams(window.location.search).get('buy');
-    const requestedButton = [...document.querySelectorAll('[data-buy-product]')]
-        .find(button => button.dataset.productId === requestedProduct);
-    requestedButton?.click();
 });
 </script>
 @endpush

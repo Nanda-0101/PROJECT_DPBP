@@ -2,14 +2,14 @@
 
 @section('page', 'account-settings')
 @section('title', 'Pengaturan Akun · CamRent')
+@section('breadcrumb', 'Pengaturan Akun')
 
 @section('content')
 <section class="section">
   <div class="app-container container-narrow">
     <div class="section-head">
       <div>
-        <span class="eyebrow badge badge-rent"><i class="bi bi-person-gear"></i> Akun Saya</span>
-        <h1 style="font-size:2rem;margin-top:12px;">Pengaturan akun</h1>
+        <h1 style="font-size:2rem;margin-top:0;">Pengaturan akun</h1>
         <p style="margin-top:8px;">Perbarui informasi profil dan keamanan akunmu.</p>
       </div>
     </div>

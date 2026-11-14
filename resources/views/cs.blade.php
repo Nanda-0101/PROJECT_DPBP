@@ -2,13 +2,13 @@
 
 @section('page', 'cs')
 @section('title', 'Pusat Bantuan (CS) · CamRent')
+@section('breadcrumb', 'Pusat Bantuan')
 
 @section('content')
-<header class="section" style="padding-bottom:10px;">
+<header class="page-head">
   <div class="app-container">
-    <span class="eyebrow badge badge-rent"><i class="bi bi-headset"></i> Customer Service</span>
-    <h1 style="font-size:2.1rem;margin:12px 0 8px;">Ada kendala? Kami bantu selesaikan.</h1>
-    <p style="max-width:600px;">Salah booking, salah tanggal, kendala pembayaran, atau alat bermasalah — laporkan di sini.</p>
+    <h1>Ada kendala? Kami bantu selesaikan.</h1>
+    <p>Salah booking, salah tanggal, kendala pembayaran, atau alat bermasalah — laporkan di sini.</p>
   </div>
 </header>
 
@@ -128,7 +128,7 @@ function sendChat() {
         bot.className = 'chat-msg bot';
         const m = val.toLowerCase();
         if (m.includes('batal')) bot.textContent = 'Untuk pembatalan, silakan isi form pengaduan dengan kategori "Salah booking".';
-        else if (m.includes('bayar') || m.includes('qris') || m.includes('transfer')) bot.textContent = 'Kami dukung Cash, Transfer, dan QRIS. Jika gagal, sertakan nomor pesanan di form.';
+        else if (m.includes('bayar') || m.includes('qris') || m.includes('transfer')) bot.textContent = 'Kami dukung Cash, transfer bank (BCA, BRI, BNI), virtual account/e-wallet (SeaBank, DANA, ShopeePay, GoPay), dan QRIS. Jika gagal, sertakan nomor pesanan di form.';
         else if (m.includes('rusak')) bot.textContent = 'Mohon maaf. Laporkan via form pengaduan kategori "Alat rusak".';
         else if (m.includes('mitra')) bot.textContent = 'Kunjungi halaman "Jadi Mitra" di menu atas.';
         else bot.textContent = 'Terima kasih, pesanmu sudah dicatat. Untuk respons cepat, isi form pengaduan.';
