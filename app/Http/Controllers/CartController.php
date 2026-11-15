@@ -9,6 +9,7 @@ use App\Services\RecommendationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
@@ -33,6 +34,10 @@ class CartController extends Controller
      */
     public function add(Request $request, Product $product): JsonResponse|RedirectResponse
     {
+        if (Auth::user()?->role !== 'user') {
+            return $this->fail($request, 'Hanya akun dengan role user yang dapat menyewa alat.', 403);
+        }
+
         $data = $request->validate([
             'qty'     => 'nullable|integer|min:1|max:99',
             'rent_now' => 'nullable|boolean',
@@ -121,6 +126,11 @@ class CartController extends Controller
     /** Dari halaman keranjang: simpan item yang dicentang lalu lanjut ke checkout. */
     public function checkout(Request $request): RedirectResponse
     {
+        if (Auth::user()?->role !== 'user') {
+            return redirect()->route('cart.index')
+                ->with('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+        }
+
         $data = $request->validate([
             'selected'   => 'required|array|min:1',
             'selected.*' => 'integer',

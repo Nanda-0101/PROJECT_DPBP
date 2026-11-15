@@ -55,7 +55,6 @@ class AuthController extends Controller
             'email'    => 'required|email|unique:users,email',
             'phone'    => 'required|string|max:20',
             'password' => 'required|string|min:6',
-            'role'     => 'required|in:user,mitra',
         ]);
 
         $user = User::create([
@@ -63,19 +62,15 @@ class AuthController extends Controller
             'email'    => $request->email,
             'password' => Hash::make($request->password),
             'phone'    => $request->phone,
-            'role'     => $request->role,
-            'status'   => $request->role === 'mitra' ? 'Menunggu Verifikasi' : 'Aktif',
+            'role'     => 'user',
+            'status'   => 'Aktif',
         ]);
 
         Auth::login($user);
         $request->session()->regenerate();
         $this->claimGuestActivity($request, $user);
 
-        $redirect = $request->role === 'mitra'
-            ? route('mitra.index')
-            : route('dashboard');
-
-        return redirect($redirect)
+        return redirect()->route('dashboard')
             ->with('success', 'Akun berhasil dibuat!');
     }
 

@@ -78,6 +78,30 @@ class MarketplaceRentalOnlyTest extends CommerceTestCase
             ->assertSessionHasErrors(['price_rent', 'photos']);
     }
 
+    public function test_only_mitra_can_open_listing_form_or_submit_a_listing(): void
+    {
+        $user = $this->createUser(['role' => 'user']);
+        $mitra = $this->createUser(['role' => 'mitra']);
+
+        $this->from(route('marketplace'))->post(route('marketplace.rent-out'))
+            ->assertRedirect(route('marketplace'))
+            ->assertSessionHas('error', 'Hanya mitra yang dapat menyewakan barang.');
+
+        $this->actingAs($user)->get(route('marketplace'))
+            ->assertOk()
+            ->assertSee('Hanya mitra yang dapat menyewakan barang.')
+            ->assertDontSee('id="modalSewakan"', false);
+
+        $this->from(route('marketplace'))->actingAs($user)
+            ->post(route('marketplace.rent-out'))
+            ->assertRedirect(route('marketplace'))
+            ->assertSessionHas('error', 'Hanya mitra yang dapat menyewakan barang.');
+
+        $this->actingAs($mitra)->get(route('marketplace'))
+            ->assertOk()
+            ->assertSee('id="modalSewakan"', false);
+    }
+
     public function test_home_page_and_footer_do_not_mention_buying(): void
     {
         $this->createProduct(['is_trending' => true]);

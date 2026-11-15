@@ -38,17 +38,6 @@
       {{-- REGISTER --}}
       <form id="registerForm" class="login-form" method="POST" action="{{ route('register') }}">
         @csrf
-        <div class="field">
-          <label>Daftar sebagai</label>
-          <div class="responsive-choice-row" style="display:flex;gap:10px;">
-            <label class="radio-card selected" style="flex:1;">
-              <input type="radio" name="role" value="user" checked> <i class="bi bi-person"></i> User
-            </label>
-            <label class="radio-card" style="flex:1;">
-              <input type="radio" name="role" value="mitra"> <i class="bi bi-shop"></i> Mitra
-            </label>
-          </div>
-        </div>
         <div class="field"><label>Nama lengkap</label><input required name="name" class="input" placeholder="Nama kamu"></div>
         <div class="field"><label>Email</label><input required type="email" name="email" class="input" placeholder="nama@email.com"></div>
         <div class="field"><label>No. HP</label><input required name="phone" class="input" placeholder="08xxxxxxxxxx"></div>
@@ -57,6 +46,10 @@
           <i class="bi bi-person-plus"></i> Buat Akun
         </button>
       </form>
+      <p class="hint" style="margin-top:16px;text-align:center;">
+        Ingin bergabung sebagai mitra?
+        <a href="{{ route('mitra.index') }}" style="color:var(--violet-deep);font-weight:700;">Daftar di halaman Mitra</a>
+      </p>
 
     </div>
     <div class="login-perks">
@@ -94,12 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
         switchTab('register');
     }
 
-    document.querySelectorAll('.radio-card').forEach(card => {
-        card.addEventListener('click', () => {
-            card.parentElement.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-        });
-    });
 });
 </script>
 @endpush

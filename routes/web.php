@@ -27,7 +27,7 @@ Route::post('/mitra',      [MitraController::class, 'store'])->name('mitra.store
 Route::get('/cs',          [CsController::class, 'index'])->name('cs');
 Route::post('/cs',         [CsController::class, 'store'])->name('cs.store');
 
-// ==== Keranjang sewa (tamu & akun login) ====
+// ==== Keranjang sewa ====
 Route::get('/keranjang',                    [CartController::class, 'index'])->name('cart.index');
 Route::post('/keranjang/checkout',          [CartController::class, 'checkout'])->name('cart.checkout');
 Route::post('/keranjang/tambah/{product}',  [CartController::class, 'add'])->name('cart.add');
@@ -41,9 +41,7 @@ Route::post('/register',[AuthController::class, 'register'])->name('register');
 Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 
 // ==== Marketplace ====
-Route::middleware('camrent.auth')->group(function () {
-    Route::post('/marketplace/sewakan',       [MarketplaceController::class, 'rentOut'])->name('marketplace.rent-out');
-});
+Route::post('/marketplace/sewakan', [MarketplaceController::class, 'rentOut'])->name('marketplace.rent-out');
 
 // Dashboard can show the current guest session or the signed-in account.
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -52,6 +50,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 Route::middleware('camrent.auth')->group(function () {
     Route::get('/pengaturan-akun', [AccountSettingsController::class, 'edit'])->name('account.settings');
     Route::patch('/pengaturan-akun', [AccountSettingsController::class, 'update'])->name('account.settings.update');
+    Route::patch('/mitra', [MitraController::class, 'update'])->name('mitra.update');
     Route::get('/media/avatars/{filename}', [ProductImageController::class, 'showAvatar'])
         ->where('filename', '[A-Za-z0-9._-]+')
         ->name('media.account-avatar');

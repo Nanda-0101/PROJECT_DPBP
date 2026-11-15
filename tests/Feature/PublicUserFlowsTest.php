@@ -97,4 +97,39 @@ class PublicUserFlowsTest extends TestCase
             'password' => '123456',
         ])->assertRedirect('/dashboard');
     }
+
+    public function test_registration_always_creates_a_user_and_mitra_signup_has_one_route(): void
+    {
+        Schema::create('users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name', 120);
+            $table->string('email', 150)->unique();
+            $table->string('password');
+            $table->string('phone', 20)->nullable();
+            $table->string('role', 20)->default('user');
+            $table->string('status', 40)->default('Aktif');
+            $table->string('avatar')->nullable();
+            $table->rememberToken();
+            $table->timestamps();
+        });
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee(route('mitra.index'))
+            ->assertDontSee('name="role"', false);
+
+        $this->post(route('register'), [
+            'name' => 'Calon Mitra',
+            'email' => 'calon@example.test',
+            'phone' => '081234567890',
+            'password' => 'password123',
+            'role' => 'mitra',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'calon@example.test',
+            'role' => 'user',
+            'status' => 'Aktif',
+        ]);
+    }
 }

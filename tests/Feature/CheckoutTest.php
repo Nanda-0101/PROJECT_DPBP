@@ -12,8 +12,9 @@ class CheckoutTest extends CommerceTestCase
         $camera = $this->createProduct(['name' => 'Kamera', 'price_per_day' => 480000, 'stock' => 2]);
         $lens = $this->createProduct(['name' => 'Lensa', 'price_per_day' => 260000, 'stock' => 5]);
         $light = $this->createProduct(['name' => 'Lighting', 'price_per_day' => 160000, 'stock' => 8]);
+        $user = $this->createUser();
 
-        $this->withSession(['cart' => [$camera->id => 1, $lens->id => 2, $light->id => 3]])
+        $this->actingAs($user)->withSession(['cart' => [$camera->id => 1, $lens->id => 2, $light->id => 3]])
             ->post(route('booking.store'), $this->checkoutPayload(
                 [$camera->id, $lens->id, $light->id],
                 ['payment_method' => 'BCA']
@@ -40,8 +41,9 @@ class CheckoutTest extends CommerceTestCase
     {
         $product = $this->createProduct(['price_per_day' => 100000, 'price_per_half_day' => 60000, 'stock' => 5]);
         $start = now()->addDays(5);
+        $user = $this->createUser();
 
-        $this->withSession(['cart' => [$product->id => 2]])
+        $this->actingAs($user)->withSession(['cart' => [$product->id => 2]])
             ->post(route('booking.store'), $this->checkoutPayload([$product->id], [
                 'start_date' => $start->toDateString(),
                 'end_date' => $start->copy()->addDays(2)->toDateString(), // 3 hari
@@ -49,7 +51,7 @@ class CheckoutTest extends CommerceTestCase
             ]));
         $this->assertDatabaseHas('bookings', ['duration_label' => '3 Hari', 'total_amount' => 600000, 'paid_amount' => 600000]);
 
-        $this->withSession(['cart' => [$product->id => 2]])
+        $this->actingAs($user)->withSession(['cart' => [$product->id => 2]])
             ->post(route('booking.store'), $this->checkoutPayload([$product->id], [
                 'start_date' => $start->copy()->addDays(10)->toDateString(),
                 'end_date' => $start->copy()->addDays(10)->toDateString(),
@@ -65,8 +67,9 @@ class CheckoutTest extends CommerceTestCase
         $a1 = $this->createProduct(['seller_id' => $mitraA->id, 'price_per_day' => 100000]);
         $a2 = $this->createProduct(['seller_id' => $mitraA->id, 'price_per_day' => 50000]);
         $b1 = $this->createProduct(['seller_id' => $mitraB->id, 'price_per_day' => 70000]);
+        $renter = $this->createUser();
 
-        $this->withSession(['cart' => [$a1->id => 1, $a2->id => 1, $b1->id => 1]])
+        $this->actingAs($renter)->withSession(['cart' => [$a1->id => 1, $a2->id => 1, $b1->id => 1]])
             ->post(route('booking.store'), $this->checkoutPayload([$a1->id, $a2->id, $b1->id]))
             ->assertRedirect(route('dashboard'));
 
@@ -80,8 +83,9 @@ class CheckoutTest extends CommerceTestCase
     {
         $a = $this->createProduct();
         $b = $this->createProduct();
+        $user = $this->createUser();
 
-        $this->withSession(['cart' => [$a->id => 1, $b->id => 2]])
+        $this->actingAs($user)->withSession(['cart' => [$a->id => 1, $b->id => 2]])
             ->post(route('booking.store'), $this->checkoutPayload([$a->id]));
 
         $this->assertSame([$b->id => 2], session('cart'));
@@ -90,8 +94,9 @@ class CheckoutTest extends CommerceTestCase
     public function test_quantity_is_taken_from_the_server_cart_not_the_form(): void
     {
         $product = $this->createProduct(['price_per_day' => 100000, 'stock' => 5]);
+        $user = $this->createUser();
 
-        $this->withSession(['cart' => [$product->id => 1]])
+        $this->actingAs($user)->withSession(['cart' => [$product->id => 1]])
             ->post(route('booking.store'), $this->checkoutPayload([$product->id], ['qty' => 5]));
 
         $this->assertDatabaseHas('order_items', ['product_id' => $product->id, 'qty' => 1]);
@@ -100,8 +105,9 @@ class CheckoutTest extends CommerceTestCase
     public function test_item_not_in_cart_is_rejected(): void
     {
         $product = $this->createProduct();
+        $user = $this->createUser();
 
-        $this->post(route('booking.store'), $this->checkoutPayload([$product->id]))
+        $this->actingAs($user)->post(route('booking.store'), $this->checkoutPayload([$product->id]))
             ->assertRedirect(route('cart.index'))
             ->assertSessionHas('error');
         $this->assertDatabaseCount('bookings', 0);
@@ -113,8 +119,9 @@ class CheckoutTest extends CommerceTestCase
         $full = $this->createProduct(['stock' => 1]);
         $date = now()->addDays(3)->toDateString();
         $this->createRental($this->createUser(), $full, $date);
+        $user = $this->createUser();
 
-        $this->withSession(['cart' => [$ok->id => 1, $full->id => 1]])
+        $this->actingAs($user)->withSession(['cart' => [$ok->id => 1, $full->id => 1]])
             ->from('/booking')
             ->post(route('booking.store'), $this->checkoutPayload([$ok->id, $full->id]))
             ->assertRedirect('/booking')
@@ -128,8 +135,9 @@ class CheckoutTest extends CommerceTestCase
     public function test_every_configured_payment_method_is_accepted(string $method): void
     {
         $product = $this->createProduct();
+        $user = $this->createUser();
 
-        $this->withSession(['cart' => [$product->id => 1]])
+        $this->actingAs($user)->withSession(['cart' => [$product->id => 1]])
             ->post(route('booking.store'), $this->checkoutPayload([$product->id], ['payment_method' => $method]))
             ->assertRedirect(route('dashboard'));
 
@@ -147,8 +155,9 @@ class CheckoutTest extends CommerceTestCase
     public function test_unknown_payment_method_is_rejected(): void
     {
         $product = $this->createProduct();
+        $user = $this->createUser();
 
-        $this->withSession(['cart' => [$product->id => 1]])
+        $this->actingAs($user)->withSession(['cart' => [$product->id => 1]])
             ->from('/booking')
             ->post(route('booking.store'), $this->checkoutPayload([$product->id], ['payment_method' => 'Bitcoin']))
             ->assertSessionHasErrors('payment_method');
@@ -158,8 +167,9 @@ class CheckoutTest extends CommerceTestCase
     public function test_checkout_page_lists_all_payment_methods(): void
     {
         $product = $this->createProduct();
+        $user = $this->createUser();
 
-        $page = $this->withSession(['cart' => [$product->id => 1]])->get(route('booking'))->assertOk();
+        $page = $this->actingAs($user)->withSession(['cart' => [$product->id => 1]])->get(route('booking'))->assertOk();
         foreach (['Bank BCA', 'Bank BRI', 'Bank BNI', 'SeaBank', 'DANA', 'ShopeePay', 'GoPay', 'QRIS', 'Cash'] as $label) {
             $page->assertSee($label);
         }
@@ -183,16 +193,34 @@ class CheckoutTest extends CommerceTestCase
             ->assertSee('Virtual Account DANA');
     }
 
-    public function test_guest_checkout_is_visible_in_the_guest_dashboard(): void
+    public function test_guest_checkout_is_rejected_with_role_message(): void
     {
         $product = $this->createProduct(['name' => 'Kamera Tamu']);
 
         $this->withSession(['cart' => [$product->id => 1]])
             ->post(route('booking.store'), $this->checkoutPayload([$product->id]))
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('cart.index'))
+            ->assertSessionHas('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
 
-        $this->assertNotEmpty(session('guest_user_ids'));
-        $this->get(route('dashboard'))->assertOk()->assertSee('Kamera Tamu');
-        $this->assertSame(1, Booking::count());
+        $this->assertSame([], session('guest_user_ids', []));
+        $this->assertSame(0, Booking::count());
+    }
+
+    public function test_mitra_cannot_open_or_submit_rental_checkout(): void
+    {
+        $mitra = $this->createUser(['role' => 'mitra']);
+        $product = $this->createProduct();
+
+        $this->actingAs($mitra)->withSession(['cart' => [$product->id => 1]])
+            ->get(route('booking'))
+            ->assertRedirect(route('cart.index'))
+            ->assertSessionHas('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+
+        $this->actingAs($mitra)->withSession(['cart' => [$product->id => 1]])
+            ->post(route('booking.store'), $this->checkoutPayload([$product->id]))
+            ->assertRedirect(route('cart.index'))
+            ->assertSessionHas('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+
+        $this->assertSame(0, Booking::count());
     }
 }

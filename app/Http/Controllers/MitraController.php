@@ -11,51 +11,64 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class MitraController extends Controller
 {
     public function index()
     {
-        return view('mitra');
+        $user = Auth::user();
+        $hasProfile = $user?->mitraProfile()->exists() ?? false;
+        $profile = $user?->isMitra() ? $user->mitraProfile : null;
+
+        return view('mitra', [
+            'mitraProfile' => $profile,
+            'canSubmitMitra' => !$user
+                || ($user->role === 'user' && !$hasProfile)
+                || ($user->isMitra() && $profile !== null),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $currentUser = Auth::user();
+
+        abort_if($currentUser?->role === 'admin', 403);
+
+        if ($currentUser && $currentUser->mitraProfile()->exists()) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Gunakan formulir update untuk mengubah profil mitra.');
+        }
+
+        $validated = $request->validate([
             'nama'      => 'required|string|max:120',
             'pemilik'   => 'required|string|max:120',
             'phone'     => Auth::check() ? 'nullable|string|max:20' : 'required|string|max:20',
             'email'     => Auth::check()
-                ? 'nullable|email'
-                : 'required|email|unique:users,email',
+                ? 'nullable|email|max:150'
+                : 'required|email|max:150|unique:users,email',
             'password'  => Auth::check() ? 'nullable' : 'required|string|min:6',
-            'nik'       => 'required|digits:16',
+            'nik'       => ['required', 'digits:16', Rule::unique('mitra_profiles', 'nik')],
             'kategori'  => 'required|string|max:50',
             'kota'      => 'required|string|max:80',
             'rekening'  => 'required|string|max:120',
-            'foto'      => 'required|array|min:1',
+            'foto'      => 'required|array|min:1|max:256',
             'foto.*'    => 'image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
-        $currentUser = Auth::user();
-        if ($currentUser && $currentUser->mitraProfile()->exists()) {
-            return redirect()->route('dashboard')
-                ->with('error', 'Akun ini sudah memiliki profil mitra.');
-        }
-
-        $user = DB::transaction(function () use ($request, $currentUser) {
+        $user = DB::transaction(function () use ($request, $currentUser, $validated) {
             $user = $currentUser ?: User::create([
-                'name'     => $request->nama,
-                'email'    => $request->email,
+                'name'     => $validated['nama'],
+                'email'    => $validated['email'],
                 'password' => Hash::make($request->password),
-                'phone'    => $request->phone,
+                'phone'    => $validated['phone'] ?? null,
                 'role'     => 'mitra',
                 'status'   => 'Menunggu Verifikasi',
             ]);
 
             if ($currentUser) {
                 $user->update([
-                    'name' => $request->nama,
+                    'name' => $validated['nama'],
                     'role' => 'mitra',
                     'status' => 'Menunggu Verifikasi',
                 ]);
@@ -63,15 +76,15 @@ class MitraController extends Controller
 
             $profile = MitraProfile::create([
                 'user_id'      => $user->id,
-                'owner_name'   => $request->pemilik,
-                'nik'          => $request->nik,
-                'category'     => $request->kategori,
-                'city'         => $request->kota,
-                'bank_account' => $request->rekening,
+                'owner_name'   => $validated['pemilik'],
+                'nik'          => $validated['nik'],
+                'category'     => $validated['kategori'],
+                'city'         => $validated['kota'],
+                'bank_account' => $validated['rekening'],
             ]);
 
             // Upload foto ke lokal (storage/app/public/mitra)
-            foreach ($request->file('foto') as $i => $file) {
+            foreach ($request->file('foto', []) as $i => $file) {
                 $path = $file->store('mitra', 'public');
 
                 MitraDocument::create([
@@ -108,5 +121,64 @@ class MitraController extends Controller
 
         return redirect()->route('dashboard')
             ->with('success', 'Pendaftaran mitra berhasil! Akun sedang diverifikasi.');
+    }
+
+    public function update(Request $request)
+    {
+        $user = $request->user();
+        abort_unless($user->isMitra(), 403);
+
+        DB::transaction(function () use ($request, $user) {
+            $profile = $user->mitraProfile()->lockForUpdate()->firstOrFail();
+            $nextPhotoOrder = (int) ($profile->documents()->max('sort_order') ?? -1) + 1;
+            $maxNewPhotos = max(0, 256 - $nextPhotoOrder);
+            $validated = $request->validate([
+                'nama'      => 'required|string|max:120',
+                'pemilik'   => 'required|string|max:120',
+                'nik'       => ['required', 'digits:16', Rule::unique('mitra_profiles', 'nik')->ignore($profile->id)],
+                'kategori'  => 'required|string|max:50',
+                'kota'      => 'required|string|max:80',
+                'rekening'  => 'required|string|max:120',
+                'foto'      => ['sometimes', 'array', 'min:1', 'max:'.$maxNewPhotos],
+                'foto.*'    => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+            ]);
+
+            $profile->fill([
+                'owner_name'   => $validated['pemilik'],
+                'nik'          => $validated['nik'],
+                'category'     => $validated['kategori'],
+                'city'         => $validated['kota'],
+                'bank_account' => $validated['rekening'],
+            ]);
+
+            $profileChanged = $profile->isDirty();
+            $photos = $request->file('foto', []);
+
+            if ($profileChanged || $photos) {
+                $profile->verified_at = null;
+            }
+
+            $profile->save();
+            $user->name = $validated['nama'];
+
+            if ($profileChanged || $photos) {
+                $user->status = 'Menunggu Verifikasi';
+            }
+
+            $user->save();
+
+            foreach (array_values($photos) as $index => $file) {
+                $path = $file->store('mitra', 'public');
+
+                MitraDocument::create([
+                    'mitra_id'   => $profile->id,
+                    'photo_url'  => $path,
+                    'sort_order' => $nextPhotoOrder + $index,
+                ]);
+            }
+        });
+
+        return redirect()->route('mitra.index')
+            ->with('success', 'Profil mitra berhasil diperbarui.');
     }
 }

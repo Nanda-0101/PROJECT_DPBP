@@ -6,7 +6,6 @@ use App\Helpers\ImageHelper;
 use App\Models\Booking;
 use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\User;
 use App\Services\CartService;
 use App\Services\RecommendationService;
 use App\Support\PaymentMethods;
@@ -30,6 +29,11 @@ class BookingController extends Controller
 
     public function create(RecommendationService $recommendations)
     {
+        if (Auth::user()?->role !== 'user') {
+            return redirect()->route('cart.index')
+                ->with('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+        }
+
         $lines = $this->cart->selectedLines();
 
         if ($lines->isEmpty()) {
@@ -63,6 +67,11 @@ class BookingController extends Controller
 
     public function store(Request $request)
     {
+        if (Auth::user()?->role !== 'user') {
+            return redirect()->route('cart.index')
+                ->with('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+        }
+
         $request->validate([
             'selected'       => 'required|array|min:1',
             'selected.*'     => 'integer',
@@ -136,9 +145,6 @@ class BookingController extends Controller
             }
 
             $userId = Auth::id();
-            if (!$userId) {
-                $userId = User::createGuest($request->renter_name, $request->renter_phone)->id;
-            }
 
             $bookings = [];
             $grouped = collect($rows)->groupBy(fn ($row) => (int) $row['product']->seller_id);
@@ -188,12 +194,6 @@ class BookingController extends Controller
         /** @var Booking[] $bookings */
         $bookings = $result['bookings'];
         $this->cart->removeMany($ids);
-
-        if (!Auth::check()) {
-            $guestUserIds = session('guest_user_ids', []);
-            $guestUserIds[] = $bookings[0]->user_id;
-            session(['guest_user_ids' => array_values(array_unique($guestUserIds))]);
-        }
 
         $codes = collect($bookings)->pluck('code');
         session()->flash('payment_summary', [

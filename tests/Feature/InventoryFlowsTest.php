@@ -30,9 +30,10 @@ class InventoryFlowsTest extends CommerceTestCase
     {
         $product = $this->createProduct(['stock' => 1]);
         $date = now()->addDays(2)->toDateString();
-        $this->createRental($this->createUser(), $product, $date);
+        $user = $this->createUser();
+        $this->createRental($user, $product, $date);
 
-        $this->withSession(['cart' => [$product->id => 1]])
+        $this->actingAs($user)->withSession(['cart' => [$product->id => 1]])
             ->from('/booking')
             ->post(route('booking.store'), $this->checkoutPayload([$product->id], [
                 'start_date' => $date, 'end_date' => $date,
@@ -45,16 +46,17 @@ class InventoryFlowsTest extends CommerceTestCase
     {
         $product = $this->createProduct(['stock' => 3]);
         $date = now()->addDays(2)->toDateString();
-        $this->createRental($this->createUser(), $product, $date, qty: 2); // sisa 1 unit
+        $user = $this->createUser();
+        $this->createRental($user, $product, $date, qty: 2); // sisa 1 unit
 
-        $this->withSession(['cart' => [$product->id => 2]])
+        $this->actingAs($user)->withSession(['cart' => [$product->id => 2]])
             ->from('/booking')
             ->post(route('booking.store'), $this->checkoutPayload([$product->id], [
                 'start_date' => $date, 'end_date' => $date,
             ]))->assertRedirect('/booking')->assertSessionHas('error');
         $this->assertDatabaseCount('bookings', 1);
 
-        $this->withSession(['cart' => [$product->id => 1]])
+        $this->actingAs($user)->withSession(['cart' => [$product->id => 1]])
             ->post(route('booking.store'), $this->checkoutPayload([$product->id], [
                 'start_date' => $date, 'end_date' => $date,
             ]))->assertRedirect(route('dashboard'));
@@ -64,8 +66,9 @@ class InventoryFlowsTest extends CommerceTestCase
     public function test_renting_does_not_reduce_stock_so_other_dates_stay_available(): void
     {
         $product = $this->createProduct(['stock' => 1]);
+        $user = $this->createUser();
 
-        $this->withSession(['cart' => [$product->id => 1]])
+        $this->actingAs($user)->withSession(['cart' => [$product->id => 1]])
             ->post(route('booking.store'), $this->checkoutPayload([$product->id]))
             ->assertRedirect(route('dashboard'));
 

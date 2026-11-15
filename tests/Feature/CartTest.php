@@ -6,14 +6,15 @@ use Tests\CommerceTestCase;
 
 class CartTest extends CommerceTestCase
 {
-    public function test_guest_can_add_multiple_different_products_to_cart(): void
+    public function test_user_can_add_multiple_different_products_to_cart(): void
     {
         $camera = $this->createProduct(['name' => 'Sony A7III']);
         $lens = $this->createProduct(['name' => 'Sigma 24-70']);
         $light = $this->createProduct(['name' => 'Aputure 120D']);
+        $user = $this->createUser();
 
         foreach ([$camera, $lens, $light] as $product) {
-            $this->postJson(route('cart.add', $product))->assertOk();
+            $this->actingAs($user)->postJson(route('cart.add', $product))->assertOk();
         }
 
         $this->assertSame(
@@ -27,13 +28,35 @@ class CartTest extends CommerceTestCase
             ->assertSee('Aputure 120D');
     }
 
+    public function test_guest_cannot_add_a_rental_and_gets_role_message(): void
+    {
+        $product = $this->createProduct();
+
+        $this->postJson(route('cart.add', $product))
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Hanya akun dengan role user yang dapat menyewa alat.');
+        $this->assertSame([], session('cart', []));
+    }
+
+    public function test_mitra_cannot_add_a_rental(): void
+    {
+        $mitra = $this->createUser(['role' => 'mitra']);
+        $product = $this->createProduct();
+
+        $this->actingAs($mitra)->postJson(route('cart.add', $product))
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Hanya akun dengan role user yang dapat menyewa alat.');
+        $this->assertSame([], session('cart', []));
+    }
+
     public function test_adding_same_product_again_increases_quantity_up_to_stock(): void
     {
         $product = $this->createProduct(['stock' => 2]);
+        $user = $this->createUser();
 
-        $this->postJson(route('cart.add', $product))->assertOk()->assertJsonPath('item.qty', 1);
-        $this->postJson(route('cart.add', $product))->assertOk()->assertJsonPath('item.qty', 2);
-        $this->postJson(route('cart.add', $product))
+        $this->actingAs($user)->postJson(route('cart.add', $product))->assertOk()->assertJsonPath('item.qty', 1);
+        $this->actingAs($user)->postJson(route('cart.add', $product))->assertOk()->assertJsonPath('item.qty', 2);
+        $this->actingAs($user)->postJson(route('cart.add', $product))
             ->assertOk()
             ->assertJsonPath('item.qty', 2)
             ->assertJsonPath('at_limit', true);
@@ -78,9 +101,10 @@ class CartTest extends CommerceTestCase
     {
         $inactive = $this->createProduct(['status' => 'Habis']);
         $saleOnly = $this->createProduct(['price_per_day' => 0, 'price_sale' => 100000]);
+        $user = $this->createUser();
 
-        $this->postJson(route('cart.add', $inactive))->assertStatus(422);
-        $this->postJson(route('cart.add', $saleOnly))->assertStatus(422);
+        $this->actingAs($user)->postJson(route('cart.add', $inactive))->assertStatus(422);
+        $this->actingAs($user)->postJson(route('cart.add', $saleOnly))->assertStatus(422);
 
         $this->withSession(['cart' => [$inactive->id => 1]])
             ->get(route('cart.index'))
@@ -93,17 +117,18 @@ class CartTest extends CommerceTestCase
     {
         $a = $this->createProduct(['name' => 'Alat A']);
         $b = $this->createProduct(['name' => 'Alat B']);
+        $user = $this->createUser();
 
-        $this->withSession(['cart' => [$a->id => 1, $b->id => 1]])
+        $this->actingAs($user)->withSession(['cart' => [$a->id => 1, $b->id => 1]])
             ->from('/keranjang')
             ->post(route('cart.checkout'), [])
             ->assertRedirect('/keranjang')
             ->assertSessionHasErrors('selected');
 
-        $this->post(route('cart.checkout'), ['selected' => [$b->id]])
+        $this->actingAs($user)->post(route('cart.checkout'), ['selected' => [$b->id]])
             ->assertRedirect(route('booking'));
 
-        $this->get(route('booking'))
+        $this->actingAs($user)->get(route('booking'))
             ->assertOk()
             ->assertSee('Alat B')
             ->assertDontSee('Alat A');
@@ -113,17 +138,20 @@ class CartTest extends CommerceTestCase
     {
         $other = $this->createProduct(['name' => 'Sudah di keranjang']);
         $target = $this->createProduct(['name' => 'Sewa langsung']);
+        $user = $this->createUser();
 
-        $this->withSession(['cart' => [$other->id => 1]])
+        $this->actingAs($user)->withSession(['cart' => [$other->id => 1]])
             ->post(route('cart.add', $target), ['rent_now' => 1])
             ->assertRedirect(route('booking'));
 
-        $this->get(route('booking'))->assertSee('Sewa langsung')->assertDontSee('Sudah di keranjang');
+        $this->actingAs($user)->get(route('booking'))->assertSee('Sewa langsung')->assertDontSee('Sudah di keranjang');
     }
 
     public function test_checkout_redirects_to_cart_when_empty(): void
     {
-        $this->get(route('booking'))->assertRedirect(route('cart.index'));
+        $this->get(route('booking'))
+            ->assertRedirect(route('cart.index'))
+            ->assertSessionHas('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
     }
 
     public function test_navbar_shows_cart_badge_count(): void

@@ -90,9 +90,18 @@
           <div class="sum-row"><span>Total unit</span><span id="sumUnits">0</span></div>
           <div class="sum-row total"><span>Estimasi / hari</span><span id="sumPerDay">Rp 0</span></div>
           <div class="hint">Total akhir dihitung sesuai tanggal & durasi sewa yang kamu pilih saat checkout.</div>
-          <button type="submit" class="btn btn-primary btn-block" id="checkoutBtn" style="margin-top:16px;" disabled>
-            <i class="bi bi-bag-check"></i> <span>Checkout (0)</span>
-          </button>
+          @if(auth()->user()?->role === 'user')
+            <button type="submit" class="btn btn-primary btn-block" id="checkoutBtn" style="margin-top:16px;" disabled>
+              <i class="bi bi-bag-check"></i> <span>Checkout (0)</span>
+            </button>
+          @else
+            <div class="hint" style="margin-top:16px;text-align:center;">
+              Silahkan login untuk dapat menyewa alat.
+              @guest
+                <a href="{{ route('login') }}" style="color:var(--violet-deep);font-weight:700;">Masuk atau daftar</a>
+              @endguest
+            </div>
+          @endif
           <div class="hint" style="margin-top:10px;text-align:center;">
             <a href="{{ route('marketplace') }}" style="color:var(--violet-deep);font-weight:700;">
               <i class="bi bi-plus-circle"></i> Tambah alat lain

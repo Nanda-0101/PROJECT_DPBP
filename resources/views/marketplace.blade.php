@@ -35,16 +35,19 @@
       <option value="price-desc" @selected($sort === 'price-desc')>Harga tertinggi</option>
       <option value="rating"     @selected($sort === 'rating')>Rating tertinggi</option>
     </select>
-    @auth
+    @if(auth()->check() && auth()->user()->role === 'mitra')
       <button type="button" class="btn btn-outline" onclick="document.getElementById('modalSewakan').classList.add('open')">
         <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
       </button>
     @else
-      <a href="{{ route('login') }}" class="btn btn-outline">
+      <button type="button" class="btn btn-outline" disabled>
         <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
-      </a>
-    @endauth
+      </button>
+    @endif
   </form>
+  @unless(auth()->check() && auth()->user()->role === 'mitra')
+    <p class="hint" style="margin-top:8px;">Silahkan login sebagai mitra yang dapat menyewakan barang.</p>
+  @endunless
 
   <div class="mp-chip-row">
     <a href="{{ route('marketplace') }}" class="mp-chip {{ !$category ? 'active' : '' }}">Semua</a>
@@ -91,6 +94,7 @@
 </div>
 
 {{-- MODAL: Sewakan Barang --}}
+@if(auth()->check() && auth()->user()->role === 'mitra')
 <div class="modal-backdrop" id="modalSewakan">
   <div class="modal-box glass-strong">
     <button type="button" class="modal-close" onclick="document.getElementById('modalSewakan').classList.remove('open')">
@@ -124,6 +128,7 @@
     </form>
   </div>
 </div>
+@endif
 @endsection
 
 @push('scripts')

@@ -95,11 +95,12 @@ class MarketplaceController extends Controller
         ]);
     }
 
-    // ==== Sewakan barang (user listing) ====
+    // ==== Sewakan barang (mitra listing) ====
     public function rentOut(Request $request)
     {
-        if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Masuk dulu untuk menyewakan barangmu.');
+        if (Auth::user()?->role !== 'mitra') {
+            return back()
+                ->with('error', 'Hanya akun dengan role mitra yang dapat menyewakan barang.');
         }
 
         $request->validate([

@@ -24,14 +24,18 @@
     </div>
 
     <div class="glass-strong card mitra-form-card">
-      <h3 style="margin-bottom:4px;">Formulir pendaftaran mitra</h3>
-      <p style="margin-bottom:18px;">Isi data berikut, verifikasi dalam 1x24 jam.</p>
-      <form method="POST" action="{{ route('mitra.store') }}" enctype="multipart/form-data">
+      @if($canSubmitMitra)
+      <h3 style="margin-bottom:4px;">{{ $mitraProfile ? 'Perbarui profil mitra' : 'Formulir pendaftaran mitra' }}</h3>
+      <p style="margin-bottom:18px;">{{ $mitraProfile ? 'Perbarui data yang ingin diubah. Perubahan data verifikasi akan diperiksa kembali.' : 'Isi data berikut, verifikasi dalam 1x24 jam.' }}</p>
+      <form method="POST" action="{{ $mitraProfile ? route('mitra.update') : route('mitra.store') }}" enctype="multipart/form-data">
         @csrf
+        @if($mitraProfile)
+          @method('PATCH')
+        @endif
         <div class="form-section">Data usaha</div>
         <div class="field"><label>Nama akun / usaha</label><input required name="nama" class="input" value="{{ old('nama', auth()->user()->name ?? '') }}" placeholder="Contoh: Alpha Rental Studio"></div>
         <div class="responsive-field-row" style="display:flex;gap:12px;">
-          <div class="field" style="flex:1;"><label>Nama pemilik</label><input required name="pemilik" class="input"></div>
+          <div class="field" style="flex:1;"><label>Nama pemilik</label><input required name="pemilik" class="input" value="{{ old('pemilik', $mitraProfile->owner_name ?? '') }}"></div>
           <div class="field" style="flex:1;"><label>No. HP / WhatsApp</label><input {{ auth()->check() ? 'readonly' : 'required' }} name="phone" class="input" value="{{ old('phone', auth()->user()->phone ?? '') }}"></div>
         </div>
         <div class="form-section">Akun</div>
@@ -41,30 +45,38 @@
         @endguest
         <div class="form-section">Verifikasi &amp; alat</div>
         <div class="form-row">
-          <div class="field"><label>NIK KTP</label><input required maxlength="16" name="nik" class="input" placeholder="16 digit NIK"></div>
-          <div class="field"><label>Kota domisili</label><input required name="kota" class="input"></div>
+          <div class="field"><label>NIK KTP</label><input required maxlength="16" name="nik" class="input" value="{{ old('nik', $mitraProfile->nik ?? '') }}" placeholder="16 digit NIK"></div>
+          <div class="field"><label>Kota domisili</label><input required name="kota" class="input" value="{{ old('kota', $mitraProfile->city ?? '') }}"></div>
         </div>
         <div class="form-row">
           <div class="field"><label>Kategori alat</label>
             <select name="kategori" class="input">
-              <option>Kamera</option><option>Lensa</option><option>Lighting</option>
-              <option>Audio</option><option>Gimbal</option><option>Tripod</option><option>Campuran</option>
+              @foreach(['Kamera', 'Lensa', 'Lighting', 'Audio', 'Gimbal', 'Tripod', 'Video', 'Campuran'] as $category)
+                <option value="{{ $category }}" @selected(old('kategori', $mitraProfile->category ?? 'Kamera') === $category)>{{ $category }}</option>
+              @endforeach
             </select>
           </div>
-          <div class="field"><label>No. rekening</label><input required name="rekening" class="input" placeholder="Nama bank & nomor rekening"></div>
+          <div class="field"><label>No. rekening</label><input required name="rekening" class="input" value="{{ old('rekening', $mitraProfile->bank_account ?? '') }}" placeholder="Nama bank & nomor rekening"></div>
         </div>
         <div class="field">
-          <label>Foto alat (wajib, minimal 1)</label>
-          <input type="file" name="foto[]" class="input" accept="image/*" multiple required>
-          <div class="hint"><i class="bi bi-info-circle"></i> Unggah minimal 1 foto asli.</div>
+          <label>Foto alat {{ $mitraProfile ? '(opsional)' : '(wajib, minimal 1)' }}</label>
+          <input type="file" name="foto[]" class="input" accept="image/*" multiple {{ $mitraProfile ? '' : 'required' }}>
+          <div class="hint"><i class="bi bi-info-circle"></i> {{ $mitraProfile ? 'Foto baru akan ditambahkan ke foto yang sudah tersimpan.' : 'Unggah minimal 1 foto asli.' }}</div>
+          @if($mitraProfile)
+            <div class="hint">Foto tersimpan: {{ $mitraProfile->documents()->count() }}</div>
+          @endif
         </div>
         <label style="display:flex;align-items:center;gap:8px;font-weight:500;margin-bottom:14px;">
-          <input type="checkbox" required> Saya setuju dengan S&K kemitraan CamRent.
+          <input type="checkbox" {{ $mitraProfile ? '' : 'required' }}> Saya setuju dengan S&K kemitraan CamRent.
         </label>
         <button type="submit" class="btn btn-primary btn-block">
-          <i class="bi bi-send-check"></i> Daftar Sebagai Mitra
+          <i class="bi {{ $mitraProfile ? 'bi-save' : 'bi-send-check' }}"></i> {{ $mitraProfile ? 'Simpan Perubahan' : 'Daftar Sebagai Mitra' }}
         </button>
       </form>
+      @else
+        <h3>Akun ini tidak dapat mendaftar sebagai mitra</h3>
+        <p>Pengelolaan akun admin dilakukan melalui konfigurasi database.</p>
+      @endif
     </div>
   </div>
 </section>
