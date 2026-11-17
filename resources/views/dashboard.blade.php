@@ -158,7 +158,7 @@
       <div class="profil-row"><span>Peran</span><span>{{ ucfirst($user->role) }}</span></div>
       @if($isMitra)
         <div class="profil-row">
-          <span>Status verifikasi</span>
+          <span>Status mitra</span>
           <span class="status-pill status-{{ strtolower(str_replace(' ', '-', $user->status)) }}">{{ $user->status }}</span>
           </div>
         @endif

@@ -34,8 +34,8 @@ class CartController extends Controller
      */
     public function add(Request $request, Product $product): JsonResponse|RedirectResponse
     {
-        if (Auth::user()?->role !== 'user') {
-            return $this->fail($request, 'Hanya akun dengan role user yang dapat menyewa alat.', 403);
+        if (!Auth::user()?->canRent()) {
+            return $this->fail($request, 'Hanya akun user atau mitra yang dapat menyewa alat.', 403);
         }
 
         $data = $request->validate([
@@ -47,6 +47,9 @@ class CartController extends Controller
         $product = $this->rentableProduct($product);
         if (!$product) {
             return $this->fail($request, 'Alat ini sedang tidak tersedia untuk disewa.');
+        }
+        if (Auth::user()->isMitra() && (int) $product->seller_id === (int) Auth::id()) {
+            return $this->fail($request, 'Mitra tidak dapat menyewa barang milik sendiri.', 403);
         }
 
         $before = $this->cart->raw()[$product->id] ?? 0;
@@ -126,9 +129,9 @@ class CartController extends Controller
     /** Dari halaman keranjang: simpan item yang dicentang lalu lanjut ke checkout. */
     public function checkout(Request $request): RedirectResponse
     {
-        if (Auth::user()?->role !== 'user') {
+        if (!Auth::user()?->canRent()) {
             return redirect()->route('cart.index')
-                ->with('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+                ->with('error', 'Hanya akun user atau mitra yang dapat menyewa alat.');
         }
 
         $data = $request->validate([

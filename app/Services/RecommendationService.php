@@ -58,10 +58,15 @@ class RecommendationService
             }
         }
 
-        $candidates = Product::active()->rentable()
+        $candidateQuery = Product::active()->rentable()
             ->with(['category', 'seller'])
-            ->whereNotIn('id', $inCartIds)
-            ->get();
+            ->whereNotIn('id', $inCartIds);
+        if (Auth::user()?->isMitra()) {
+            $candidateQuery->where(fn ($query) => $query
+                ->whereNull('seller_id')
+                ->orWhere('seller_id', '!=', Auth::id()));
+        }
+        $candidates = $candidateQuery->get();
 
         $ranked = $candidates->map(function (Product $product) use ($categoryScores, $dominant) {
             $categoryScore = $categoryScores[$product->category_id] ?? 0;

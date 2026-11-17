@@ -6,6 +6,7 @@
 <div class="pc-image-wrap">
   @if($img)
     <img class="pc-photo" src="{{ $img }}" alt="{{ $imageName }}" loading="lazy"
+         onload="this.classList.toggle('is-wide', this.naturalWidth / this.naturalHeight > 1.2)"
          onerror="this.hidden=true;this.nextElementSibling.hidden=false">
   @endif
   <div class="pc-icon pc-image-fallback" @if($img) hidden @endif>

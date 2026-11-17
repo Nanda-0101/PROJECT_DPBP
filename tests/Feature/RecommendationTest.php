@@ -28,6 +28,19 @@ class RecommendationTest extends CommerceTestCase
         $this->assertNotContains('Light di keranjang', $this->names($result));
     }
 
+    public function test_mitra_recommendations_exclude_their_own_products(): void
+    {
+        $mitra = $this->createUser(['role' => 'mitra']);
+        $this->createProduct(['name' => 'Barang sendiri', 'seller_id' => $mitra->id]);
+        $this->createProduct(['name' => 'Barang CamRent']);
+
+        $this->actingAs($mitra);
+        $result = app(RecommendationService::class)->forCart(5);
+
+        $this->assertNotContains('Barang sendiri', $this->names($result));
+        $this->assertContains('Barang CamRent', $this->names($result));
+    }
+
     public function test_most_rented_category_boosts_recommendations(): void
     {
         $camera = $this->createCategory('Kamera');

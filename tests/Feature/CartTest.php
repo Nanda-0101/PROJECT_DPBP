@@ -34,19 +34,47 @@ class CartTest extends CommerceTestCase
 
         $this->postJson(route('cart.add', $product))
             ->assertForbidden()
-            ->assertJsonPath('message', 'Hanya akun dengan role user yang dapat menyewa alat.');
+            ->assertJsonPath('message', 'Hanya akun user atau mitra yang dapat menyewa alat.');
         $this->assertSame([], session('cart', []));
     }
 
-    public function test_mitra_cannot_add_a_rental(): void
+    public function test_mitra_can_add_another_mitras_rental(): void
+    {
+        $owner = $this->createUser(['role' => 'mitra']);
+        $renter = $this->createUser(['role' => 'mitra']);
+        $product = $this->createProduct(['seller_id' => $owner->id]);
+
+        $this->actingAs($renter)->postJson(route('cart.add', $product))
+            ->assertOk()
+            ->assertJsonPath('item.id', $product->id);
+
+        $this->assertSame([$product->id => 1], session('cart'));
+    }
+
+    public function test_mitra_cannot_add_own_rental(): void
     {
         $mitra = $this->createUser(['role' => 'mitra']);
-        $product = $this->createProduct();
+        $product = $this->createProduct(['seller_id' => $mitra->id]);
 
         $this->actingAs($mitra)->postJson(route('cart.add', $product))
             ->assertForbidden()
-            ->assertJsonPath('message', 'Hanya akun dengan role user yang dapat menyewa alat.');
+            ->assertJsonPath('message', 'Mitra tidak dapat menyewa barang milik sendiri.');
         $this->assertSame([], session('cart', []));
+    }
+
+    public function test_marketplace_detail_disables_renting_own_products_for_mitra(): void
+    {
+        $mitra = $this->createUser(['role' => 'mitra']);
+        $otherMitra = $this->createUser(['role' => 'mitra']);
+        $ownProduct = $this->createProduct(['seller_id' => $mitra->id]);
+        $otherProduct = $this->createProduct(['seller_id' => $otherMitra->id]);
+
+        $this->actingAs($mitra)->getJson(route('marketplace.product.show', $ownProduct))
+            ->assertOk()
+            ->assertJsonPath('can_rent', false);
+        $this->actingAs($mitra)->getJson(route('marketplace.product.show', $otherProduct))
+            ->assertOk()
+            ->assertJsonPath('can_rent', true);
     }
 
     public function test_adding_same_product_again_increases_quantity_up_to_stock(): void
@@ -151,7 +179,7 @@ class CartTest extends CommerceTestCase
     {
         $this->get(route('booking'))
             ->assertRedirect(route('cart.index'))
-            ->assertSessionHas('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+            ->assertSessionHas('error', 'Hanya akun user atau mitra yang dapat menyewa alat.');
     }
 
     public function test_navbar_shows_cart_badge_count(): void

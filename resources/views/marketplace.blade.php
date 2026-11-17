@@ -5,15 +5,25 @@
 @section('breadcrumb', 'Catalog')
 
 @section('content')
-<header class="page-head">
+<header class="page-head cat-head">
   <div class="app-container">
-    <h1>Sewa peralatan kreatif</h1>
-    <p>Pilih alat dari mitra terpercaya, masukkan ke keranjang, lalu sewa sekaligus dalam satu kali checkout.</p>
+    <div class="cat-hero">
+      <div class="cat-hero-text">
+        <span class="cat-eyebrow"><i class="bi bi-camera-reels"></i> Catalog CamRent</span>
+        <h1>Sewa peralatan kreatif</h1>
+        <p>Pilih alat dari mitra terpercaya, masukkan ke keranjang, lalu sewa sekaligus dalam satu kali checkout.</p>
+      </div>
+      <ul class="cat-hero-stats" aria-label="Ringkasan catalog">
+        <li><b>{{ $products->count() }}</b><span>Alat tersedia</span></li>
+        <li><b>{{ $categories->count() }}</b><span>Kategori</span></li>
+        <li><b>1x</b><span>Checkout</span></li>
+      </ul>
+    </div>
   </div>
 </header>
 
 <section class="app-container">
-  <form class="mp-toolbar glass" method="GET" action="{{ route('marketplace') }}">
+  <form class="mp-toolbar" method="GET" action="{{ route('marketplace') }}">
     <div class="mp-search">
       <i class="bi bi-search"></i>
       <input type="text" name="q" value="{{ $q }}" class="input" placeholder="Cari nama alat, merek, atau kategori...">
@@ -50,17 +60,17 @@
   @endunless
 
   <div class="mp-chip-row">
-    <a href="{{ route('marketplace') }}" class="mp-chip {{ !$category ? 'active' : '' }}">Semua</a>
+    <a href="{{ route('marketplace') }}" class="mp-chip {{ !$category ? 'active' : '' }}"><i class="bi bi-grid-3x3-gap"></i> Semua</a>
     @foreach($categories as $c)
       <a href="{{ route('marketplace', ['category' => $c->name]) }}"
-         class="mp-chip {{ $category === $c->name ? 'active' : '' }}">{{ $c->name }}</a>
+         class="mp-chip {{ $category === $c->name ? 'active' : '' }}"><i class="bi {{ $c->icon ?: 'bi-box-seam' }}"></i> {{ $c->name }}</a>
     @endforeach
   </div>
 
   <div class="mp-result-bar">
     <div class="mp-result-info">
       <p class="mp-result-count"><b>{{ $products->count() }} alat</b> tersedia untuk disewa{{ $category ? ' · '.$category : '' }}</p>
-      <p class="mp-result-tip"><i class="bi bi-lightbulb"></i> Klik foto atau nama alat untuk melihat specsheet</p>
+      <p class="mp-result-tip"><i class="bi bi-hand-index-thumb"></i> Klik foto atau nama alat untuk melihat specsheet</p>
     </div>
   </div>
 
@@ -191,7 +201,11 @@ document.addEventListener('DOMContentLoaded', () => {
         empty.hidden = true;
         empty.append(icon('bi-image'), el('span', null, 'Foto tidak dapat dimuat'));
         image.addEventListener('error', () => { image.hidden = true; empty.hidden = false; });
-        image.addEventListener('load', () => { image.hidden = false; empty.hidden = true; });
+        image.addEventListener('load', () => {
+            image.hidden = false;
+            empty.hidden = true;
+            image.classList.toggle('is-wide', image.naturalWidth / image.naturalHeight > 1.2);
+        });
 
         const angle = el('span', 'pd-angle');
         const counter = el('span', 'pd-counter');
@@ -267,24 +281,52 @@ document.addEventListener('DOMContentLoaded', () => {
         return gallery;
     };
 
-    // ---- Tabel spesifikasi ----
+    const buildPrices = (product) => {
+        const prices = el('div', 'detail-price-box');
+        [
+            ['Sewa / hari', product.price_per_day, true],
+            ['Sewa / 12 jam', product.price_per_half_day, false],
+        ].forEach(([label, price, main]) => {
+            if (!price || price <= 0) return;
+            const item = el('div', main ? 'dp-item dp-main' : 'dp-item');
+            item.append(el('span', null, label), el('b', null, `Rp ${Number(price).toLocaleString('id-ID')}`));
+            prices.append(item);
+        });
+        return prices;
+    };
+
+    // ---- Spesifikasi: 4 sorotan utama + tabel lengkap ----
     const buildSpecs = (product) => {
         const wrap = el('section', 'pd-specs');
-        wrap.append(el('h4', null, 'Spesifikasi'));
 
         const rows = [];
-        if (product.brand) rows.push({ label: 'Merek', value: product.brand });
         (product.spec_rows ?? []).forEach(row => rows.push(row));
         const features = product.spec_features ?? [];
 
-        if (!rows.length && !features.length) {
-            wrap.append(el('p', 'hint', 'Spesifikasi belum tersedia.'));
+        if (!rows.length && !features.length && !product.brand) {
+            wrap.append(el('h4', null, 'Spesifikasi'), el('p', 'hint', 'Spesifikasi belum tersedia.'));
             return wrap;
         }
 
-        if (rows.length) {
+        const highlights = rows.filter(r => r.value && r.value.length <= 28).slice(0, 4);
+        if (highlights.length >= 2) {
+            const grid = el('div', 'pd-highlights');
+            highlights.forEach(row => {
+                const tile = el('div', 'pd-hl');
+                tile.append(el('span', null, row.label), el('b', null, row.value));
+                grid.append(tile);
+            });
+            wrap.append(grid);
+        }
+
+        wrap.append(el('h4', null, 'Spesifikasi lengkap'));
+        const tableRows = [];
+        if (product.brand) tableRows.push({ label: 'Merek', value: product.brand });
+        rows.forEach(row => tableRows.push(row));
+
+        if (tableRows.length) {
             const table = el('dl', 'spec-table');
-            rows.forEach(row => {
+            tableRows.forEach(row => {
                 const line = el('div', 'spec-row');
                 line.append(el('dt', null, row.label), el('dd', null, row.value));
                 table.append(line);
@@ -292,26 +334,16 @@ document.addEventListener('DOMContentLoaded', () => {
             wrap.append(table);
         }
         if (features.length) {
-            if (rows.length) wrap.append(el('h5', 'pd-sub', 'Fitur'));
+            wrap.append(el('h5', 'pd-sub', 'Fitur unggulan'));
             const list = el('ul', 'product-spec-list');
-            features.forEach(text => list.append(el('li', null, text)));
+            features.forEach(text => {
+                const li = el('li');
+                li.append(icon('bi-check2-circle'), document.createTextNode(text));
+                list.append(li);
+            });
             wrap.append(list);
         }
         return wrap;
-    };
-
-    const buildPrices = (product) => {
-        const prices = el('div', 'detail-price-box');
-        [
-            ['Sewa / hari', product.price_per_day],
-            ['Sewa / 12 jam', product.price_per_half_day],
-        ].forEach(([label, price]) => {
-            if (!price || price <= 0) return;
-            const item = el('div', 'dp-item');
-            item.append(el('span', null, label), el('b', null, `Rp ${Number(price).toLocaleString('id-ID')}`));
-            prices.append(item);
-        });
-        return prices;
     };
 
     const buildInfo = (product) => {
@@ -324,20 +356,40 @@ document.addEventListener('DOMContentLoaded', () => {
             rating.append(icon('bi-star-fill'), document.createTextNode(` ${product.rating} / 5`));
             chips.append(rating);
         }
-        const stock = el('span', 'pd-chip');
-        stock.append(icon('bi-box-seam'), document.createTextNode(` Stok ${product.stock}`));
+        const stockLow = Number(product.stock) <= 1;
+        const stock = el('span', stockLow ? 'pd-chip pd-chip-low' : 'pd-chip pd-chip-stock');
+        stock.append(icon('bi-box-seam'), document.createTextNode(stockLow ? ` Sisa ${product.stock}` : ` Stok ${product.stock}`));
         chips.append(stock);
         info.append(chips);
+
+        if (product.brand) info.append(el('span', 'pd-brand', product.brand));
 
         const heading = el('h3', null, product.name);
         heading.id = 'productDetailTitle';
         info.append(heading);
 
         const owner = el('p', 'pd-owner');
-        owner.append(icon('bi-shop-window'), document.createTextNode(` ${product.seller}`));
+        owner.append(icon('bi-shop-window'), document.createTextNode(` Disewakan oleh ${product.seller}`));
         info.append(owner);
 
-        if (product.description) info.append(el('p', 'pd-desc', product.description));
+        if (product.description) {
+            const text = product.description.trim();
+            const desc = el('p', 'pd-desc', text);
+            info.append(desc);
+            // Deskripsi panjang dipangkas 4 baris + tombol "Selengkapnya".
+            if (text.length > 220) {
+                desc.classList.add('pd-desc-clamp');
+                const more = el('button', 'pd-desc-toggle', 'Selengkapnya');
+                more.type = 'button';
+                more.setAttribute('aria-expanded', 'false');
+                more.addEventListener('click', () => {
+                    const open = desc.classList.toggle('pd-desc-clamp') === false;
+                    more.textContent = open ? 'Lebih sedikit' : 'Selengkapnya';
+                    more.setAttribute('aria-expanded', open ? 'true' : 'false');
+                });
+                info.append(more);
+            }
+        }
         const prices = buildPrices(product);
         if (prices.childElementCount) info.append(prices);
         info.append(buildSpecs(product));
@@ -433,7 +485,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const layout = el('div', 'pd-layout');
             layout.append(buildGallery(product), buildInfo(product));
             detailContent.append(layout);
-            detailContent.append(buildRentActions(product));
+            if (product.can_rent) {
+                detailContent.append(buildRentActions(product));
+            } else {
+                detailContent.append(el('p', 'hint', 'Barang sendiri tidak dapat disewa.'));
+            }
         } catch (error) {
             detailContent.replaceChildren();
             const message = document.createElement('p');

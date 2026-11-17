@@ -57,4 +57,9 @@ class User extends Authenticatable
     {
         return $this->role === 'mitra';
     }
+
+    public function canRent(): bool
+    {
+        return in_array($this->role, ['user', 'mitra'], true);
+    }
 }

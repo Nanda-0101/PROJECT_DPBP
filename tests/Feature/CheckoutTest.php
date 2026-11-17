@@ -200,26 +200,59 @@ class CheckoutTest extends CommerceTestCase
         $this->withSession(['cart' => [$product->id => 1]])
             ->post(route('booking.store'), $this->checkoutPayload([$product->id]))
             ->assertRedirect(route('cart.index'))
-            ->assertSessionHas('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+            ->assertSessionHas('error', 'Hanya akun user atau mitra yang dapat menyewa alat.');
 
         $this->assertSame([], session('guest_user_ids', []));
         $this->assertSame(0, Booking::count());
     }
 
-    public function test_mitra_cannot_open_or_submit_rental_checkout(): void
+    public function test_mitra_can_checkout_another_mitras_rental(): void
+    {
+        $owner = $this->createUser(['role' => 'mitra']);
+        $renter = $this->createUser(['role' => 'mitra']);
+        $product = $this->createProduct(['seller_id' => $owner->id]);
+
+        $this->actingAs($renter)->withSession(['cart' => [$product->id => 1]])
+            ->get(route('booking'))
+            ->assertOk();
+
+        $this->actingAs($renter)->withSession(['cart' => [$product->id => 1]])
+            ->post(route('booking.store'), $this->checkoutPayload([$product->id]))
+            ->assertRedirect(route('dashboard'));
+
+        $this->assertDatabaseHas('bookings', ['user_id' => $renter->id]);
+        $this->assertDatabaseHas('order_items', ['product_id' => $product->id]);
+    }
+
+    public function test_mitra_cannot_open_or_submit_checkout_for_own_rental(): void
     {
         $mitra = $this->createUser(['role' => 'mitra']);
-        $product = $this->createProduct();
+        $product = $this->createProduct(['seller_id' => $mitra->id]);
 
         $this->actingAs($mitra)->withSession(['cart' => [$product->id => 1]])
             ->get(route('booking'))
             ->assertRedirect(route('cart.index'))
-            ->assertSessionHas('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+            ->assertSessionHas('error', 'Mitra tidak dapat menyewa barang milik sendiri.');
 
         $this->actingAs($mitra)->withSession(['cart' => [$product->id => 1]])
+            ->from('/booking')
             ->post(route('booking.store'), $this->checkoutPayload([$product->id]))
-            ->assertRedirect(route('cart.index'))
-            ->assertSessionHas('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+            ->assertRedirect('/booking')
+            ->assertSessionHas('error', 'Mitra tidak dapat menyewa barang milik sendiri.');
+
+        $this->assertSame(0, Booking::count());
+    }
+
+    public function test_mitra_cannot_submit_own_product_from_a_stale_cart(): void
+    {
+        $mitra = $this->createUser(['role' => 'mitra']);
+        $product = $this->createProduct(['seller_id' => $mitra->id]);
+
+        $this->actingAs($mitra)->withSession(['cart' => [$product->id => 1]])
+            ->from('/booking')
+            ->post(route('booking.store'), $this->checkoutPayload([$product->id]))
+            ->assertRedirect('/booking')
+            ->assertSessionHas('error', 'Mitra tidak dapat menyewa barang milik sendiri.');
 
         $this->assertSame(0, Booking::count());
     }

@@ -17,16 +17,16 @@
         <div class="mitra-benefit glass"><i class="bi bi-headset"></i><span>Didampingi CS</span></div>
       </div>
       <ol class="mitra-steps">
-        <li><span class="step-num">1</span><div><b>Daftar &amp; unggah foto alat</b><p>Isi formulir di samping dengan data yang benar.</p></div></li>
-        <li><span class="step-num">2</span><div><b>Verifikasi 1×24 jam</b><p>Tim CamRent memeriksa data dan kondisi alatmu.</p></div></li>
-        <li><span class="step-num">3</span><div><b>Alat tayang &amp; mulai disewa</b><p>Terima pesanan sewa, konfirmasi, dan dapatkan penghasilan.</p></div></li>
+        <li><span class="step-num">1</span><div><b>Daftar &amp; lengkapi data mitra</b><p>Isi formulir di samping dengan data yang benar.</p></div></li>
+        <li><span class="step-num">2</span><div><b>Langsung aktif sebagai mitra</b><p>Akun mitra aktif setelah formulir berhasil dikirim.</p></div></li>
+        <li><span class="step-num">3</span><div><b>Kelola alat dan pesanan</b><p>Gunakan dashboard untuk mengelola produk dan pesanan sewamu.</p></div></li>
       </ol>
     </div>
 
     <div class="glass-strong card mitra-form-card">
       @if($canSubmitMitra)
       <h3 style="margin-bottom:4px;">{{ $mitraProfile ? 'Perbarui profil mitra' : 'Formulir pendaftaran mitra' }}</h3>
-      <p style="margin-bottom:18px;">{{ $mitraProfile ? 'Perbarui data yang ingin diubah. Perubahan data verifikasi akan diperiksa kembali.' : 'Isi data berikut, verifikasi dalam 1x24 jam.' }}</p>
+      <p style="margin-bottom:18px;">{{ $mitraProfile ? 'Perbarui data profil mitramu.' : 'Isi data berikut untuk langsung aktif sebagai mitra setelah mendaftar.' }}</p>
       <form method="POST" action="{{ $mitraProfile ? route('mitra.update') : route('mitra.store') }}" enctype="multipart/form-data">
         @csrf
         @if($mitraProfile)
@@ -43,7 +43,7 @@
         @guest
           <div class="field"><label>Kata sandi akun</label><input required type="password" name="password" minlength="6" class="input" placeholder="Minimal 6 karakter"></div>
         @endguest
-        <div class="form-section">Verifikasi &amp; alat</div>
+        <div class="form-section">Data mitra</div>
         <div class="form-row">
           <div class="field"><label>NIK KTP</label><input required maxlength="16" name="nik" class="input" value="{{ old('nik', $mitraProfile->nik ?? '') }}" placeholder="16 digit NIK"></div>
           <div class="field"><label>Kota domisili</label><input required name="kota" class="input" value="{{ old('kota', $mitraProfile->city ?? '') }}"></div>

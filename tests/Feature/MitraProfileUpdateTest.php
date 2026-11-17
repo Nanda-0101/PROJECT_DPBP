@@ -6,6 +6,8 @@ use App\Models\MitraProfile;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class MitraProfileUpdateTest extends TestCase
@@ -47,10 +49,71 @@ class MitraProfileUpdateTest extends TestCase
         });
     }
 
-    public function test_mitra_can_update_own_profile_and_editing_resets_verification(): void
+    public function test_guest_registration_activates_mitra_account_immediately(): void
     {
-        $user = $this->createUser(['role' => 'mitra', 'status' => 'Terverifikasi']);
-        $profile = $this->createProfile($user);
+        Storage::fake('public');
+
+        $this->post(route('mitra.store'), [
+            'nama' => 'Studio Budi',
+            'pemilik' => 'Budi Santoso',
+            'phone' => '081234567890',
+            'email' => 'studio@example.test',
+            'password' => 'password',
+            'nik' => '3201234567890001',
+            'kategori' => 'Kamera',
+            'kota' => 'Bandung',
+            'rekening' => 'BCA 123 a.n. Budi',
+            'foto' => [UploadedFile::fake()->createWithContent(
+                'alat.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lS8AAAAASUVORK5CYII=')
+            )],
+        ])->assertRedirect(route('dashboard'))
+            ->assertSessionHas('success', 'Pendaftaran mitra berhasil! Akunmu sekarang aktif sebagai mitra.');
+
+        $user = User::where('email', 'studio@example.test')->firstOrFail();
+        $this->assertAuthenticatedAs($user);
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'role' => 'mitra',
+            'status' => 'Terverifikasi',
+        ]);
+        $profile = MitraProfile::where('user_id', $user->id)->firstOrFail();
+        $this->assertNotNull($profile->verified_at);
+        $this->assertDatabaseHas('mitra_documents', ['mitra_id' => $profile->id]);
+    }
+
+    public function test_existing_user_becomes_active_mitra_immediately(): void
+    {
+        Storage::fake('public');
+        $user = $this->createUser(['role' => 'user', 'status' => 'Aktif']);
+
+        $this->actingAs($user)->post(route('mitra.store'), [
+            'nama' => 'Studio Budi',
+            'pemilik' => 'Budi Santoso',
+            'nik' => '3201234567890001',
+            'kategori' => 'Kamera',
+            'kota' => 'Bandung',
+            'rekening' => 'BCA 123 a.n. Budi',
+            'foto' => [UploadedFile::fake()->createWithContent(
+                'alat.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lS8AAAAASUVORK5CYII=')
+            )],
+        ])->assertRedirect(route('dashboard'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'role' => 'mitra',
+            'status' => 'Terverifikasi',
+        ]);
+        $profile = MitraProfile::where('user_id', $user->id)->firstOrFail();
+        $this->assertNotNull($profile->verified_at);
+    }
+
+    public function test_mitra_can_update_own_profile_without_waiting_for_verification(): void
+    {
+        $user = $this->createUser(['role' => 'mitra', 'status' => 'Menunggu Verifikasi']);
+        $profile = $this->createProfile($user, ['verified_at' => null]);
         $profile->documents()->create([
             'photo_url' => 'mitra/foto-lama.jpg',
             'sort_order' => 0,
@@ -75,17 +138,15 @@ class MitraProfileUpdateTest extends TestCase
             'id' => $user->id,
             'name' => 'Budi Rental',
             'role' => 'mitra',
-            'status' => 'Menunggu Verifikasi',
+            'status' => 'Terverifikasi',
         ]);
-        $this->assertDatabaseHas('mitra_profiles', [
-            'id' => $profile->id,
-            'owner_name' => 'Budi Santoso',
-            'nik' => '3201234567890002',
-            'category' => 'Lighting',
-            'city' => 'Bandung',
-            'bank_account' => 'BCA 123 a.n. Budi',
-            'verified_at' => null,
-        ]);
+        $updatedProfile = MitraProfile::findOrFail($profile->id);
+        $this->assertSame('Budi Santoso', $updatedProfile->owner_name);
+        $this->assertSame('3201234567890002', $updatedProfile->nik);
+        $this->assertSame('Lighting', $updatedProfile->category);
+        $this->assertSame('Bandung', $updatedProfile->city);
+        $this->assertSame('BCA 123 a.n. Budi', $updatedProfile->bank_account);
+        $this->assertNotNull($updatedProfile->verified_at);
         $this->assertDatabaseHas('mitra_documents', [
             'mitra_id' => $profile->id,
             'photo_url' => 'mitra/foto-lama.jpg',

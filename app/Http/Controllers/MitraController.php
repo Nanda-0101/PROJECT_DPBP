@@ -63,14 +63,14 @@ class MitraController extends Controller
                 'password' => Hash::make($request->password),
                 'phone'    => $validated['phone'] ?? null,
                 'role'     => 'mitra',
-                'status'   => 'Menunggu Verifikasi',
+                'status'   => 'Terverifikasi',
             ]);
 
             if ($currentUser) {
                 $user->update([
                     'name' => $validated['nama'],
                     'role' => 'mitra',
-                    'status' => 'Menunggu Verifikasi',
+                    'status' => 'Terverifikasi',
                 ]);
             }
 
@@ -81,6 +81,7 @@ class MitraController extends Controller
                 'category'     => $validated['kategori'],
                 'city'         => $validated['kota'],
                 'bank_account' => $validated['rekening'],
+                'verified_at'  => now(),
             ]);
 
             // Upload foto ke lokal (storage/app/public/mitra)
@@ -120,7 +121,7 @@ class MitraController extends Controller
         }
 
         return redirect()->route('dashboard')
-            ->with('success', 'Pendaftaran mitra berhasil! Akun sedang diverifikasi.');
+            ->with('success', 'Pendaftaran mitra berhasil! Akunmu sekarang aktif sebagai mitra.');
     }
 
     public function update(Request $request)
@@ -151,20 +152,11 @@ class MitraController extends Controller
                 'bank_account' => $validated['rekening'],
             ]);
 
-            $profileChanged = $profile->isDirty();
             $photos = $request->file('foto', []);
-
-            if ($profileChanged || $photos) {
-                $profile->verified_at = null;
-            }
-
+            $profile->verified_at ??= now();
             $profile->save();
             $user->name = $validated['nama'];
-
-            if ($profileChanged || $photos) {
-                $user->status = 'Menunggu Verifikasi';
-            }
-
+            $user->status = 'Terverifikasi';
             $user->save();
 
             foreach (array_values($photos) as $index => $file) {

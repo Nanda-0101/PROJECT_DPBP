@@ -9,6 +9,7 @@ use App\Support\ProductGallery;
 use App\Support\SpecSheet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class MarketplaceController extends Controller
 {
@@ -23,6 +24,11 @@ class MarketplaceController extends Controller
         $highlight = $request->get('highlight');
 
         $query = Product::active()->rentable()->with(['category', 'seller']);
+
+        // Spesifikasi singkat untuk chip di kartu (dilewati bila tabelnya belum ada).
+        if (Schema::hasTable('product_specs')) {
+            $query->with('specs:id,product_id,spec_text,sort_order');
+        }
 
         if ($source === 'mitra') {
             $query->whereHas('seller', fn($seller) => $seller->where('role', 'mitra'));
@@ -92,6 +98,8 @@ class MarketplaceController extends Controller
             'spec_features' => $sheet['features'],
             'images' => ProductGallery::for($product),
             'cart_add_url' => route('cart.add', $product),
+            'can_rent' => !Auth::user()?->isMitra()
+                || (int) $product->seller_id !== (int) Auth::id(),
         ]);
     }
 
@@ -140,13 +148,13 @@ class MarketplaceController extends Controller
             'price_per_day'      => $hargaSewa,
             'price_per_half_day' => round($hargaSewa * 0.6),
             'stock'              => (int) ($request->stock ?: 1),
-            'status'             => 'Menunggu Verifikasi',
+            'status'             => 'Aktif',
         ]);
 
         // Foto ke-2 dst. disimpan sebagai sudut tambahan di galeri specsheet.
         ProductGallery::storeExtras($product, array_slice($paths, 1));
 
         return redirect()->route('marketplace')
-            ->with('success', 'Barang berhasil diajukan! Setelah diverifikasi, alatmu tayang di marketplace untuk disewa.');
+            ->with('success', 'Barang berhasil ditayangkan di marketplace dan siap disewa.');
     }
 }

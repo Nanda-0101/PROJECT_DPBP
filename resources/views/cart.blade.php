@@ -90,7 +90,7 @@
           <div class="sum-row"><span>Total unit</span><span id="sumUnits">0</span></div>
           <div class="sum-row total"><span>Estimasi / hari</span><span id="sumPerDay">Rp 0</span></div>
           <div class="hint">Total akhir dihitung sesuai tanggal & durasi sewa yang kamu pilih saat checkout.</div>
-          @if(auth()->user()?->role === 'user')
+          @if(auth()->user()?->canRent())
             <button type="submit" class="btn btn-primary btn-block" id="checkoutBtn" style="margin-top:16px;" disabled>
               <i class="bi bi-bag-check"></i> <span>Checkout (0)</span>
             </button>

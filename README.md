@@ -42,9 +42,9 @@ Penyewa harus masuk dengan akun ber-role `user`. Jika tamu atau mitra mencoba me
 
 1. Pengguna membuka halaman **Jadi Mitra** dari navigasi, beranda, footer, atau tautan di halaman masuk.
 2. Formulir meminta data akun/usaha, pemilik, NIK, kota, kategori, rekening, dan foto alat.
-3. Setelah mendaftar, profil menunggu verifikasi. Mitra yang sudah memiliki profil dapat menggunakan halaman yang sama untuk memperbarui data.
+3. Setelah mendaftar, akun langsung aktif dengan role `mitra` tanpa menunggu verifikasi admin. Mitra yang sudah memiliki profil dapat menggunakan halaman yang sama untuk memperbarui data.
 4. Role `mitra` dapat membuka **Sewakan Barang Saya** di Catalog untuk mengajukan barang beserta harga sewa, stok, deskripsi, dan foto.
-5. Barang baru berstatus menunggu verifikasi. Pesanan masuk, produk mitra, dan status verifikasi dapat dilihat melalui Dashboard mitra.
+5. Barang baru langsung aktif dan tampil di marketplace tanpa menunggu verifikasi. Pesanan masuk dan produk mitra dapat dilihat melalui Dashboard mitra.
 
 Tombol pengajuan barang hanya tersedia untuk akun mitra. Tamu dan user melihat keterangan bahwa hanya role mitra yang dapat menyewakan barang; endpoint backend juga memeriksa role tersebut.
 

@@ -29,9 +29,9 @@ class BookingController extends Controller
 
     public function create(RecommendationService $recommendations)
     {
-        if (Auth::user()?->role !== 'user') {
+        if (!Auth::user()?->canRent()) {
             return redirect()->route('cart.index')
-                ->with('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+                ->with('error', 'Hanya akun user atau mitra yang dapat menyewa alat.');
         }
 
         $lines = $this->cart->selectedLines();
@@ -39,6 +39,12 @@ class BookingController extends Controller
         if ($lines->isEmpty()) {
             return redirect()->route('cart.index')
                 ->with('error', 'Keranjang sewa masih kosong. Pilih alat dulu ya.');
+        }
+        if (Auth::user()->isMitra() && $lines->contains(
+            fn ($line) => (int) $line['product']->seller_id === (int) Auth::id()
+        )) {
+            return redirect()->route('cart.index')
+                ->with('error', 'Mitra tidak dapat menyewa barang milik sendiri.');
         }
 
         return view('booking', [
@@ -67,9 +73,9 @@ class BookingController extends Controller
 
     public function store(Request $request)
     {
-        if (Auth::user()?->role !== 'user') {
+        if (!Auth::user()?->canRent()) {
             return redirect()->route('cart.index')
-                ->with('error', 'Hanya akun dengan role user yang dapat menyewa alat.');
+                ->with('error', 'Hanya akun user atau mitra yang dapat menyewa alat.');
         }
 
         $request->validate([
@@ -130,6 +136,9 @@ class BookingController extends Controller
 
                 if (!$product || $product->status !== 'Aktif' || $product->price_per_day <= 0) {
                     return ['error' => 'Salah satu alat sudah tidak tersedia untuk disewa.'];
+                }
+                if (Auth::user()->isMitra() && (int) $product->seller_id === (int) Auth::id()) {
+                    return ['error' => 'Mitra tidak dapat menyewa barang milik sendiri.'];
                 }
                 if ($product->stock < $qty || !$this->hasRentalAvailability($product, $start, $end, $qty)) {
                     return ['error' => "{$product->name} ({$qty} unit) tidak tersedia pada tanggal yang dipilih."];

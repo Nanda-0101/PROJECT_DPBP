@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\CommerceTestCase;
 
 class MarketplaceRentalOnlyTest extends CommerceTestCase
@@ -76,6 +78,31 @@ class MarketplaceRentalOnlyTest extends CommerceTestCase
         $this->actingAs($user)->from('/marketplace')
             ->post(route('marketplace.rent-out'), ['name' => 'Alat', 'category' => 'Kamera'])
             ->assertSessionHasErrors(['price_rent', 'photos']);
+    }
+
+    public function test_mitra_listing_is_active_and_visible_immediately(): void
+    {
+        Storage::fake('public');
+        $user = $this->createUser(['role' => 'mitra']);
+
+        $this->actingAs($user)->post(route('marketplace.rent-out'), [
+            'name' => 'Alat Langsung Tayang',
+            'category' => 'Kamera',
+            'price_rent' => 100000,
+            'stock' => 1,
+            'photos' => [UploadedFile::fake()->createWithContent(
+                'alat.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lS8AAAAASUVORK5CYII=')
+            )],
+        ])->assertRedirect(route('marketplace'))
+            ->assertSessionHas('success', 'Barang berhasil ditayangkan di marketplace dan siap disewa.');
+
+        $this->assertDatabaseHas('products', [
+            'name' => 'Alat Langsung Tayang',
+            'seller_id' => $user->id,
+            'status' => 'Aktif',
+        ]);
+        $this->get(route('marketplace'))->assertSee('Alat Langsung Tayang');
     }
 
     public function test_only_mitra_can_open_listing_form_or_submit_a_listing(): void
