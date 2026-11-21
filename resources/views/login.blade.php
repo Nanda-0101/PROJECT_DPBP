@@ -52,11 +52,6 @@
       </p>
 
     </div>
-    <div class="login-perks">
-      <span><i class="bi bi-cart-check"></i>Sewa banyak alat sekaligus</span>
-      <span><i class="bi bi-wallet2"></i>Bayar via Bank &amp; E-Wallet</span>
-      <span><i class="bi bi-shield-check"></i>Aman &amp; terpercaya</span>
-    </div>
   </div>
 </section>
 @endsection
