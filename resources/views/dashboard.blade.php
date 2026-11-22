@@ -9,7 +9,7 @@
   <div class="dash-head glass card">
     <div class="dash-avatar">{{ $user ? strtoupper(substr($user->name, 0, 2)) : 'T' }}</div>
     <div style="flex:1;">
-      <h2 style="font-size:1.4rem;">{{ $user?->name ?? 'Aktivitas Tamu' }}</h2>
+      <h2 style="font-size:1.5rem;">{{ $user?->name ?? 'Aktivitas Tamu' }}</h2>
       <div class="hint">
         @if($user)
           {{ $isMitra ? 'Akun Mitra / Penyedia Alat' : 'Akun Pengguna' }}
@@ -40,7 +40,7 @@
   {{-- RIWAYAT --}}
   <div class="dash-panel" id="panelRiwayat">
     <div class="section-head" style="margin-bottom:14px;">
-      <h3 style="font-size:1.2rem;"><i class="bi bi-clock-history gradient-text"></i> Riwayat Sewa</h3>
+      <h3 style="font-size:1.25rem;"><i class="bi bi-clock-history gradient-text"></i> Riwayat Sewa</h3>
     </div>
     @forelse($bookings as $b)
       <div class="order-item">
@@ -84,7 +84,7 @@
   @if($isMitra)
     <div class="dash-panel" id="panelToko" style="display:none;">
       <div class="section-head" style="margin-bottom:14px;">
-        <h3 style="font-size:1.2rem;"><i class="bi bi-shop gradient-text"></i> Pesanan Sewa Masuk ke Toko Saya</h3>
+        <h3 style="font-size:1.25rem;"><i class="bi bi-shop gradient-text"></i> Pesanan Sewa Masuk ke Toko Saya</h3>
       </div>
       @forelse($myOrders as $b)
         <div class="order-item">
@@ -127,7 +127,7 @@
       @endforelse
 
       <div class="section-head" style="margin:30px 0 14px;">
-        <h3 style="font-size:1.2rem;"><i class="bi bi-box-seam gradient-text"></i> Produk Saya</h3>
+        <h3 style="font-size:1.25rem;"><i class="bi bi-box-seam gradient-text"></i> Produk Saya</h3>
         <a href="{{ route('marketplace') }}" class="link-more">Sewakan alat <i class="bi bi-arrow-right"></i></a>
       </div>
       <div class="dash-product-grid">
@@ -151,7 +151,7 @@
   @if($user)
     <div class="dash-panel" id="panelProfil" style="display:none;">
     <div class="glass card" style="max-width:520px;padding:24px;">
-      <h3 style="font-size:1.1rem;margin-bottom:16px;"><i class="bi bi-person-badge gradient-text"></i> Info Akun</h3>
+      <h3 style="font-size:1.12rem;margin-bottom:16px;"><i class="bi bi-person-badge gradient-text"></i> Info Akun</h3>
       <div class="profil-row"><span>Nama</span><span>{{ $user->name }}</span></div>
       <div class="profil-row"><span>Email</span><span>{{ $user->email }}</span></div>
       <div class="profil-row"><span>No. HP</span><span>{{ $user->phone ?? '-' }}</span></div>

@@ -116,7 +116,7 @@
 @if($recommendations->isNotEmpty())
   <section class="app-container" style="padding-bottom:30px;">
     <div class="section-head" style="margin-bottom:16px;">
-      <h2 style="font-size:1.4rem;"><i class="bi bi-stars gradient-text"></i> Rekomendasi untuk kamu</h2>
+      <h2 style="font-size:1.5rem;"><i class="bi bi-stars gradient-text"></i> Rekomendasi untuk kamu</h2>
     </div>
     <div class="rec-grid">
       @foreach($recommendations as $p)

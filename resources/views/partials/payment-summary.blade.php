@@ -8,7 +8,7 @@
   <div class="pay-summary-head">
     <span class="bk-num"><i class="bi bi-wallet2"></i></span>
     <div>
-      <h3 style="font-size:1.1rem;">Selesaikan pembayaranmu</h3>
+      <h3 style="font-size:1.12rem;">Selesaikan pembayaranmu</h3>
       <div class="hint" style="margin:0;">Pesanan {{ implode(', ', $summary['codes']) }}</div>
     </div>
     <span class="status-pill waiting"><i class="bi bi-hourglass-split"></i> Menunggu pembayaran</span>

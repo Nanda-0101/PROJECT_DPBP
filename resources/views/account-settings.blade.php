@@ -60,7 +60,7 @@
         </div>
 
         <div class="divider"></div>
-        <h2 style="font-size:1.15rem;margin-bottom:6px;">Ubah kata sandi</h2>
+        <h2 style="font-size:1.12rem;margin-bottom:6px;">Ubah kata sandi</h2>
         <p class="hint" style="margin-bottom:16px;">Kosongkan jika tidak ingin mengubah kata sandi.</p>
         <div class="field">
           <label for="current_password">Kata sandi saat ini</label>

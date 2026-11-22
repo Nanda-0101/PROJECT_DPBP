@@ -28,7 +28,7 @@
       <div class="glass card bk-step">
         <div class="bk-step-title" style="justify-content:space-between;">
           <span style="display:flex;align-items:center;gap:10px;"><span class="bk-num">1</span> Alat yang disewa</span>
-          <a href="{{ route('cart.index') }}" class="link-more" style="font-size:.85rem;"><i class="bi bi-pencil-square"></i> Ubah di keranjang</a>
+          <a href="{{ route('cart.index') }}" class="link-more" style="font-size:.88rem;"><i class="bi bi-pencil-square"></i> Ubah di keranjang</a>
         </div>
         <div id="checkoutItems"></div>
         @error('selected')<div class="hint" style="color:var(--danger);">{{ $message }}</div>@enderror

@@ -16,8 +16,7 @@
   {{-- Form --}}
   <div class="glass card cs-form-card">
     <h3 style="margin-bottom:4px;"><i class="bi bi-flag gradient-text"></i> Ajukan Pengaduan</h3>
-    @if($user)
-      <p style="margin-bottom:18px;">Ceritakan kendalamu, sertakan nomor pesanan jika ada.</p>
+    <p style="margin-bottom:18px;">Ceritakan kendalamu, sertakan nomor pesanan jika ada.</p>
     <form method="POST" action="{{ route('cs.store') }}">
       @csrf
       <div class="field">
@@ -57,12 +56,6 @@
         <i class="bi bi-send"></i> Kirim Pengaduan
       </button>
     </form>
-    @else
-      <p>Silakan masuk atau daftar akun untuk mengirim pengaduan.</p>
-      <a href="{{ route('login') }}" class="btn btn-primary btn-block">
-        <i class="bi bi-person-circle"></i> Masuk / Daftar
-      </a>
-    @endif
   </div>
 
   {{-- Side --}}
@@ -91,7 +84,7 @@
         </div>
       @empty
         <div class="empty-state" style="padding:24px 10px;">
-          <i class="bi bi-inbox" style="font-size:1.6rem;"></i>
+          <i class="bi bi-inbox" style="font-size:1.5rem;"></i>
           <p>Belum ada tiket pengaduan.</p>
         </div>
       @endforelse
@@ -100,16 +93,19 @@
 </section>
 
 {{-- FAQ --}}
-<section class="app-container" id="faq" style="margin-top:20px;">
-  <div class="section-head"><h2 style="font-size:1.4rem;"><i class="bi bi-question-circle-fill gradient-text"></i> Pertanyaan Umum</h2></div>
+<section class="app-container faq-section" id="faq">
+  <div class="section-head"><h2 class="faq-title"><i class="bi bi-question-circle-fill gradient-text"></i> Pertanyaan Umum</h2></div>
   <div class="faq-accordion">
     @foreach($faqs as $i => $f)
       <div class="faq-item" id="faq-{{ $i }}">
-        <div class="faq-q" onclick="document.getElementById('faq-{{ $i }}').classList.toggle('open')">
+        <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-a-{{ $i }}"
+                onclick="const it=this.closest('.faq-item');this.setAttribute('aria-expanded',it.classList.toggle('open'))">
           <span>{{ $f['q'] }}</span>
-          <i class="bi bi-chevron-down"></i>
+          <i class="bi bi-chevron-down" aria-hidden="true"></i>
+        </button>
+        <div class="faq-a" id="faq-a-{{ $i }}" role="region">
+          <div class="faq-a-inner"><p>{{ $f['a'] }}</p></div>
         </div>
-        <div class="faq-a"><p>{{ $f['a'] }}</p></div>
       </div>
     @endforeach
   </div>
