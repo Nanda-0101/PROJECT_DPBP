@@ -25,7 +25,7 @@ Route::post('/booking',    [BookingController::class, 'store'])->name('booking.s
 Route::get('/mitra',       [MitraController::class, 'index'])->name('mitra.index');
 Route::post('/mitra',      [MitraController::class, 'store'])->name('mitra.store');
 Route::get('/cs',          [CsController::class, 'index'])->name('cs');
-Route::post('/cs',         [CsController::class, 'store'])->name('cs.store');
+Route::post('/cs',         [CsController::class, 'store'])->middleware('camrent.auth')->name('cs.store');
 
 // ==== Keranjang sewa ====
 Route::get('/keranjang',                    [CartController::class, 'index'])->name('cart.index');

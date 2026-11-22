@@ -16,7 +16,8 @@
   {{-- Form --}}
   <div class="glass card cs-form-card">
     <h3 style="margin-bottom:4px;"><i class="bi bi-flag gradient-text"></i> Ajukan Pengaduan</h3>
-    <p style="margin-bottom:18px;">Ceritakan kendalamu, sertakan nomor pesanan jika ada.</p>
+    @if($user)
+      <p style="margin-bottom:18px;">Ceritakan kendalamu, sertakan nomor pesanan jika ada.</p>
     <form method="POST" action="{{ route('cs.store') }}">
       @csrf
       <div class="field">
@@ -56,6 +57,12 @@
         <i class="bi bi-send"></i> Kirim Pengaduan
       </button>
     </form>
+    @else
+      <p>Silakan masuk atau daftar akun untuk mengirim pengaduan.</p>
+      <a href="{{ route('login') }}" class="btn btn-primary btn-block">
+        <i class="bi bi-person-circle"></i> Masuk / Daftar
+      </a>
+    @endif
   </div>
 
   {{-- Side --}}

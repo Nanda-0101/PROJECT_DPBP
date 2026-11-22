@@ -24,21 +24,65 @@ class PublicUserFlowsTest extends TestCase
         $this->get('/dashboard')->assertOk();
     }
 
-    public function test_guest_can_submit_a_support_ticket_without_an_account(): void
+    public function test_guest_cannot_submit_a_support_ticket_without_an_account(): void
     {
         $this->createTicketsTable();
+
+        $this->get('/cs')
+            ->assertOk()
+            ->assertSee(route('login'))
+            ->assertDontSee('Kirim Pengaduan');
 
         $this->post('/cs', [
             'category' => 'Lainnya',
             'name' => 'Pengunjung',
             'contact' => '081234567890',
             'description' => 'Mohon bantuan terkait layanan.',
+        ])->assertRedirect(route('login'))
+            ->assertSessionHas('error', 'Silakan masuk terlebih dahulu.');
+
+        $this->assertDatabaseMissing('tickets', [
+            'name' => 'Pengunjung',
+            'contact' => '081234567890',
+        ]);
+    }
+
+    public function test_signed_in_user_can_submit_a_support_ticket(): void
+    {
+        $this->createTicketsTable();
+        Schema::create('users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name', 120);
+            $table->string('email', 150)->unique();
+            $table->string('password');
+            $table->string('phone', 20)->nullable();
+            $table->string('role', 20)->default('user');
+            $table->string('status', 40)->default('Aktif');
+            $table->string('avatar')->nullable();
+            $table->rememberToken();
+            $table->timestamps();
+        });
+
+        $user = User::create([
+            'name' => 'Pengguna Terdaftar',
+            'email' => 'pengguna@example.test',
+            'password' => 'password',
+            'phone' => '081234567890',
+            'role' => 'user',
+            'status' => 'Aktif',
+        ]);
+
+        $this->actingAs($user)->post('/cs', [
+            'category' => 'Lainnya',
+            'name' => $user->name,
+            'contact' => $user->phone,
+            'description' => 'Mohon bantuan terkait layanan.',
         ])->assertRedirect();
 
         $this->assertDatabaseHas('tickets', [
-            'user_id' => null,
-            'name' => 'Pengunjung',
-            'contact' => '081234567890',
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'contact' => $user->phone,
         ]);
     }
 
