@@ -50,6 +50,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 Route::middleware('camrent.auth')->group(function () {
     Route::get('/pengaturan-akun', [AccountSettingsController::class, 'edit'])->name('account.settings');
     Route::patch('/pengaturan-akun', [AccountSettingsController::class, 'update'])->name('account.settings.update');
+    Route::delete('/marketplace/products/{product}', [MarketplaceController::class, 'remove'])->name('marketplace.remove');
     Route::patch('/mitra', [MitraController::class, 'update'])->name('mitra.update');
     Route::get('/media/avatars/{filename}', [ProductImageController::class, 'showAvatar'])
         ->where('filename', '[A-Za-z0-9._-]+')

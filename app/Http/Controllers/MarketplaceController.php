@@ -9,7 +9,9 @@ use App\Support\ProductGallery;
 use App\Support\SpecSheet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class MarketplaceController extends Controller
 {
@@ -156,5 +158,48 @@ class MarketplaceController extends Controller
 
         return redirect()->route('marketplace')
             ->with('success', 'Barang berhasil ditayangkan di marketplace dan siap disewa.');
+    }
+
+    public function remove(Request $request, Product $product)
+    {
+        if (Auth::user()?->role !== 'mitra') {
+            return back()
+                ->with('error', 'Hanya akun dengan role mitra yang dapat menghapus barang.');
+        }
+
+        if ((int) $product->seller_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'stock_to_remove' => 'required|integer|min:1',
+        ]);
+        $stockToRemove = (int) $validated['stock_to_remove'];
+
+        $remainingStock = DB::transaction(function () use ($product, $stockToRemove) {
+            $lockedProduct = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
+
+            if ($stockToRemove > (int) $lockedProduct->stock) {
+                throw ValidationException::withMessages([
+                    'stock_to_remove' => 'Jumlah stok yang dihapus melebihi stok yang tersedia.',
+                ]);
+            }
+
+            $remaining = (int) $lockedProduct->stock - $stockToRemove;
+            $updates = ['stock' => $remaining];
+
+            if ($remaining === 0) {
+                $updates['status'] = 'Habis';
+            }
+
+            $lockedProduct->update($updates);
+
+            return $remaining;
+        });
+
+        return redirect()->route('marketplace')->with(
+            'success',
+            "Stok sebanyak {$stockToRemove} unit berhasil dihapus. Sisa stok: {$remainingStock} unit."
+        );
     }
 }

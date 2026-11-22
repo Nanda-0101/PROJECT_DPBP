@@ -105,6 +105,86 @@ class MarketplaceRentalOnlyTest extends CommerceTestCase
         $this->get(route('marketplace'))->assertSee('Alat Langsung Tayang');
     }
 
+    public function test_mitra_can_remove_all_stock_while_preserving_rental_history(): void
+    {
+        $mitra = $this->createUser(['role' => 'mitra']);
+        $renter = $this->createUser();
+        $product = $this->createProduct(['seller_id' => $mitra->id, 'name' => 'Listing untuk Dihapus']);
+        $booking = $this->createRental($renter, $product, now()->addDays(3)->toDateString());
+
+        $this->actingAs($mitra)
+            ->get(route('marketplace'))
+            ->assertSee('Jumlah stok dihapus')
+            ->assertSee('Hapus stok')
+            ->assertSee('Listing untuk Dihapus');
+
+        $this->delete(route('marketplace.remove', $product), ['stock_to_remove' => 3])
+            ->assertRedirect(route('marketplace'))
+            ->assertSessionHas('success', 'Stok sebanyak 3 unit berhasil dihapus. Sisa stok: 0 unit.');
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'status' => 'Habis',
+            'stock' => 0,
+        ]);
+        $this->assertDatabaseHas('order_items', [
+            'booking_id' => $booking->id,
+            'product_id' => $product->id,
+        ]);
+        $this->get(route('marketplace'))->assertDontSee('Listing untuk Dihapus');
+    }
+
+    public function test_mitra_can_remove_part_of_the_stock_without_hiding_the_listing(): void
+    {
+        $mitra = $this->createUser(['role' => 'mitra']);
+        $product = $this->createProduct(['seller_id' => $mitra->id, 'stock' => 5]);
+
+        $this->actingAs($mitra)
+            ->delete(route('marketplace.remove', $product), ['stock_to_remove' => 2])
+            ->assertRedirect(route('marketplace'))
+            ->assertSessionHas('success', 'Stok sebanyak 2 unit berhasil dihapus. Sisa stok: 3 unit.');
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'status' => 'Aktif',
+            'stock' => 3,
+        ]);
+        $this->get(route('marketplace'))->assertSee('Kamera Contoh')->assertSee('Stok 3');
+    }
+
+    public function test_mitra_cannot_remove_more_stock_than_is_available(): void
+    {
+        $mitra = $this->createUser(['role' => 'mitra']);
+        $product = $this->createProduct(['seller_id' => $mitra->id, 'stock' => 2]);
+
+        $this->actingAs($mitra)
+            ->delete(route('marketplace.remove', $product), ['stock_to_remove' => 3])
+            ->assertSessionHasErrors('stock_to_remove');
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'status' => 'Aktif',
+            'stock' => 2,
+        ]);
+    }
+
+    public function test_only_the_listing_mitra_can_remove_their_product(): void
+    {
+        $owner = $this->createUser(['role' => 'mitra']);
+        $otherMitra = $this->createUser(['role' => 'mitra']);
+        $product = $this->createProduct(['seller_id' => $owner->id]);
+
+        $this->actingAs($otherMitra)
+            ->delete(route('marketplace.remove', $product))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'status' => 'Aktif',
+            'stock' => 3,
+        ]);
+    }
+
     public function test_only_mitra_can_open_listing_form_or_submit_a_listing(): void
     {
         $user = $this->createUser(['role' => 'user']);

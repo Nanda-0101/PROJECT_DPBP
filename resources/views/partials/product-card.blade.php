@@ -72,7 +72,23 @@
 
     <div class="pc-actions">
       @if($isOwnMitraProduct)
-        <span class="hint">Barang sendiri tidak dapat disewa.</span>
+        <span class="hint" style="grid-column:1/-1;">Barang sendiri tidak dapat disewa.</span>
+        @if($isMarketplace)
+          <form method="POST" action="{{ route('marketplace.remove', $p) }}"
+                style="grid-column:1/-1;display:grid;gap:8px;"
+                onsubmit="return confirm('Hapus jumlah stok yang diisi dari marketplace?');">
+            @csrf
+            @method('DELETE')
+            <label class="hint" for="stock-to-remove-{{ $p->id }}">
+              Jumlah stok dihapus (tersedia: {{ $p->stock }})
+            </label>
+            <input id="stock-to-remove-{{ $p->id }}" type="number" name="stock_to_remove"
+                   class="input" min="1" max="{{ $p->stock }}" value="{{ $p->stock }}" required>
+            <button type="submit" class="btn btn-danger btn-sm">
+              <i class="bi bi-trash"></i><span class="btn-text">Hapus stok</span>
+            </button>
+          </form>
+        @endif
       @else
         <form method="POST" action="{{ route('cart.add', $p) }}" class="js-cart-add">
           @csrf
