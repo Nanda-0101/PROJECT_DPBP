@@ -27,13 +27,15 @@
         @forelse($trending as $p)
           @php $img = \App\Helpers\ImageHelper::url($p->image); @endphp
           <div class="hero-mini-card">
-            @if($img)
-              <img class="hero-mini-photo" src="{{ $img }}" alt="{{ $p->name }}" loading="lazy"
-                   onerror="this.hidden=true;this.nextElementSibling.hidden=false">
-              <i class="bi {{ $p->icon ?? 'bi-box-seam' }} hero-mini-fallback" hidden></i>
-            @else
-              <i class="bi {{ $p->icon ?? 'bi-box-seam' }}"></i>
-            @endif
+            <div class="hero-mini-media">
+              @if($img)
+                <img class="hero-mini-photo" src="{{ $img }}" alt="{{ $p->name }}" loading="lazy"
+                     onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+                <i class="bi {{ $p->icon ?? 'bi-box-seam' }} hero-mini-fallback" hidden></i>
+              @else
+                <i class="bi {{ $p->icon ?? 'bi-box-seam' }} hero-mini-fallback"></i>
+              @endif
+            </div>
             <span class="mm-name">{{ $p->name }}</span>
             <div class="mm-price">
               <b>{{ 'Rp '.number_format($p->price_per_day,0,',','.') }}<span class="hint" style="display:inline;font-weight:600;">/hari</span></b>
