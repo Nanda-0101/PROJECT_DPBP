@@ -5,6 +5,7 @@ use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CsController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MarketplaceController;
@@ -26,6 +27,8 @@ Route::get('/mitra',       [MitraController::class, 'index'])->name('mitra.index
 Route::post('/mitra',      [MitraController::class, 'store'])->name('mitra.store');
 Route::get('/cs',          [CsController::class, 'index'])->name('cs');
 Route::post('/cs',         [CsController::class, 'store'])->middleware('camrent.auth')->name('cs.store');
+Route::post('/cs/chat',    [ChatController::class, 'send'])->middleware('throttle:30,1')->name('cs.chat.send');
+Route::get('/cs/chat/history', [ChatController::class, 'history'])->middleware('throttle:60,1')->name('cs.chat.history');
 
 // ==== Keranjang sewa ====
 Route::get('/keranjang',                    [CartController::class, 'index'])->name('cart.index');

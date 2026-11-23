@@ -65,9 +65,9 @@
       <div class="chat-window" id="chatWindow">
         <div class="chat-msg bot">Halo! Ada yang bisa saya bantu terkait booking atau pembayaran?</div>
       </div>
-      <form id="chatForm" class="chat-input-row" onsubmit="return false;">
-        <input class="input" id="chatInput" placeholder="Ketik pesan...">
-        <button type="button" class="btn btn-primary btn-sm" onclick="sendChat()"><i class="bi bi-send"></i></button>
+      <form id="chatForm" class="chat-input-row">
+        <input class="input" id="chatInput" name="message" maxlength="2000" placeholder="Ketik pesan..." autocomplete="off">
+        <button type="submit" id="chatSend" class="btn btn-primary btn-sm"><i class="bi bi-send"></i></button>
       </form>
     </div>
 
@@ -114,30 +114,100 @@
 
 @push('scripts')
 <script>
-function sendChat() {
-    const input = document.getElementById('chatInput');
-    const val = input.value.trim();
-    if (!val) return;
-    const win = document.getElementById('chatWindow');
+(() => {
+  const win = document.getElementById('chatWindow');
+  const form = document.getElementById('chatForm');
+  const input = document.getElementById('chatInput');
+  const sendButton = document.getElementById('chatSend');
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
-    const me = document.createElement('div');
-    me.className = 'chat-msg me';
-    me.textContent = val;
-    win.appendChild(me);
+  function scrollChat() {
+    win.scrollTop = win.scrollHeight;
+  }
+
+  function appendMessage(sender, text) {
+    const bubble = document.createElement('div');
+    bubble.className = sender === 'user' ? 'chat-msg me' : 'chat-msg bot';
+    bubble.textContent = text;
+    win.appendChild(bubble);
+    scrollChat();
+    return bubble;
+  }
+
+  async function loadHistory() {
+    try {
+      const response = await fetch(@json(route('cs.chat.history')), {
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin',
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (Array.isArray(data.messages) && data.messages.length) {
+        win.replaceChildren();
+        data.messages.forEach(item => appendMessage(item.sender, item.message));
+      }
+    } catch (_) {
+      // Riwayat tetap dapat dibuka ulang; pesan awal tetap ditampilkan jika gagal.
+    }
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
+    if (message.length > 2000) {
+      appendMessage('assistant', 'Pesan terlalu panjang. Batasi pesan hingga 2.000 karakter.');
+      return;
+    }
+
+    appendMessage('user', message);
     input.value = '';
+    input.disabled = true;
+    sendButton.disabled = true;
+    const typing = document.createElement('div');
+    typing.className = 'chat-msg bot';
+    typing.textContent = 'CAMRENT AI sedang memproses...';
+    win.appendChild(typing);
+    scrollChat();
 
-    setTimeout(() => {
-        const bot = document.createElement('div');
-        bot.className = 'chat-msg bot';
-        const m = val.toLowerCase();
-        if (m.includes('batal')) bot.textContent = 'Untuk pembatalan, silakan isi form pengaduan dengan kategori "Salah booking".';
-        else if (m.includes('bayar') || m.includes('qris') || m.includes('transfer')) bot.textContent = 'Kami dukung Cash, transfer bank (BCA, BRI, BNI), virtual account/e-wallet (SeaBank, DANA, ShopeePay, GoPay), dan QRIS. Jika gagal, sertakan nomor pesanan di form.';
-        else if (m.includes('rusak')) bot.textContent = 'Mohon maaf. Laporkan via form pengaduan kategori "Alat rusak".';
-        else if (m.includes('mitra')) bot.textContent = 'Kunjungi halaman "Jadi Mitra" di menu atas.';
-        else bot.textContent = 'Terima kasih, pesanmu sudah dicatat. Untuk respons cepat, isi form pengaduan.';
-        win.appendChild(bot);
-        win.scrollTop = win.scrollHeight;
-    }, 400);
-}
+    try {
+      const response = await fetch(@json(route('cs.chat.send')), {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrf,
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ message }),
+      });
+
+      const data = await response.json().catch(() => null);
+      typing.remove();
+      if (!response.ok) {
+        appendMessage('assistant', data?.message
+          || 'Maaf, layanan AI CAMRENT sedang tidak dapat dihubungi. Silakan coba beberapa saat lagi atau gunakan Form Pengaduan.');
+        return;
+      }
+      appendMessage('assistant', data.message);
+    } catch (_) {
+      typing.remove();
+      appendMessage('assistant', 'Maaf, koneksi ke layanan CAMRENT terputus. Silakan coba lagi atau gunakan Form Pengaduan.');
+    } finally {
+      input.disabled = false;
+      sendButton.disabled = false;
+      input.focus();
+    }
+  });
+
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  loadHistory();
+})();
 </script>
 @endpush

@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'ollama' => [
+        'base_url' => rtrim((string) env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434'), '/'),
+        'model' => (string) env('OLLAMA_MODEL', 'qwen3:4b'),
+        'timeout' => (int) env('OLLAMA_TIMEOUT', 60),
+    ],
 
     /*
     |--------------------------------------------------------------------------
