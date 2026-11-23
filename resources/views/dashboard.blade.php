@@ -12,7 +12,7 @@
       <h2 style="font-size:1.5rem;">{{ $user?->name ?? 'Aktivitas Tamu' }}</h2>
       <div class="hint">
         @if($user)
-          {{ $isMitra ? 'Akun Mitra / Penyedia Alat' : 'Akun Pengguna' }}
+          {{ $user->isAdmin() ? 'Administrator CamRent' : ($isMitra ? 'Akun Mitra / Penyedia Alat' : 'Akun Pengguna') }}
         @else
           Pesanan yang dibuat dari browser ini. Masuk atau daftar untuk menyimpan riwayat ke akun.
         @endif
@@ -29,6 +29,9 @@
 
   <div class="dash-tabs">
     <div class="dash-tab active" data-tab="riwayat"><i class="bi bi-clock-history"></i> Riwayat Sewa</div>
+    @if($canMonitorOrders)
+      <div class="dash-tab" data-tab="pesanan"><i class="bi bi-clipboard-data"></i> Pantau Pesanan</div>
+    @endif
     @if($isMitra)
       <div class="dash-tab" data-tab="toko"><i class="bi bi-shop"></i> Toko Saya</div>
     @endif
@@ -80,13 +83,18 @@
     @endforelse
   </div>
 
-  {{-- TOKO (mitra only) --}}
-  @if($isMitra)
-    <div class="dash-panel" id="panelToko" style="display:none;">
+  @if($canMonitorOrders)
+    <div class="dash-panel" id="panelPesanan" style="display:none;">
       <div class="section-head" style="margin-bottom:14px;">
-        <h3 style="font-size:1.25rem;"><i class="bi bi-shop gradient-text"></i> Pesanan Sewa Masuk ke Toko Saya</h3>
+        <h3 style="font-size:1.25rem;"><i class="bi bi-clipboard-data gradient-text"></i> Pesanan Sewa dari User</h3>
       </div>
-      @forelse($myOrders as $b)
+      <p class="hint">Admin dan mitra dapat memantau seluruh pesanan. Aksi status hanya tersedia untuk pesanan produk milik mitra.</p>
+      @forelse($monitoredOrders as $b)
+        @php
+          $canUpdateOrder = $isMitra && $b->items->contains(
+              fn ($item) => (int) ($item->product?->seller_id ?? 0) === (int) $user->id
+          );
+        @endphp
         <div class="order-item">
           <div class="order-icon"><i class="bi bi-person-check"></i></div>
           <div class="order-info">
@@ -105,7 +113,7 @@
             <div><span class="status-pill status-{{ strtolower(str_replace(' ', '-', $b->status)) }}">{{ $b->status }}</span></div>
           </div>
           <div class="order-actions">
-            @if($b->status === 'Menunggu Konfirmasi')
+            @if($canUpdateOrder && $b->status === 'Menunggu Konfirmasi')
               <form method="POST" action="{{ route('dashboard.booking.status', [$b->id, 'Dikonfirmasi']) }}" style="display:inline">
                 @csrf @method('PATCH')
                 <button class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Konfirmasi</button>
@@ -114,18 +122,27 @@
                 @csrf @method('PATCH')
                 <button class="btn btn-danger btn-sm"><i class="bi bi-x-lg"></i> Tolak</button>
               </form>
-            @elseif($b->status === 'Dikonfirmasi')
+            @elseif($canUpdateOrder && $b->status === 'Dikonfirmasi')
               <form method="POST" action="{{ route('dashboard.booking.status', [$b->id, 'Selesai']) }}" style="display:inline">
                 @csrf @method('PATCH')
                 <button class="btn btn-primary btn-sm"><i class="bi bi-check2-all"></i> Tandai Selesai</button>
               </form>
+            @elseif(!$canUpdateOrder && !$isMitra)
+              <span class="hint">Pemantauan</span>
+            @elseif(!$canUpdateOrder)
+              <span class="hint">Di luar produk Anda</span>
             @endif
           </div>
         </div>
       @empty
-        <div class="empty-state"><i class="bi bi-inbox"></i><p>Belum ada pesanan masuk.</p></div>
+        <div class="empty-state"><i class="bi bi-inbox"></i><p>Belum ada pesanan sewa dari user.</p></div>
       @endforelse
+    </div>
+  @endif
 
+  {{-- TOKO (mitra only) --}}
+  @if($isMitra)
+    <div class="dash-panel" id="panelToko" style="display:none;">
       <div class="section-head" style="margin:30px 0 14px;">
         <h3 style="font-size:1.25rem;"><i class="bi bi-box-seam gradient-text"></i> Produk Saya</h3>
         <a href="{{ route('marketplace') }}" class="link-more">Sewakan alat <i class="bi bi-arrow-right"></i></a>

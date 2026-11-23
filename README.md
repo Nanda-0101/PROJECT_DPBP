@@ -19,8 +19,8 @@ CamRent dirancang untuk membuat proses sewa terasa jelas dan ringkas:
 | --- | --- |
 | **Tamu** | Dapat menjelajahi katalog dan melihat informasi produk. Harus masuk atau mendaftar sebagai `user` untuk menambahkan barang ke keranjang dan menyewa. |
 | **User** | Dapat menyimpan barang di keranjang, mengatur pilihan, melakukan checkout, melihat riwayat sewa, serta menghubungi CS. |
-| **Mitra** | Dapat mengelola profil, menayangkan barang, dan menangani pesanan untuk barangnya. Mitra tetap dapat menyewa barang milik pihak lain, tetapi tidak dapat menyewa barang sendiri. |
-| **Admin** | Dapat masuk, menambahkan produk CamRent ke Catalog, dan menggunakan alur sewa. Akun admin tidak dibuat melalui pendaftaran publik. |
+| **Mitra** | Dapat mengelola profil, menayangkan barang, dan memantau semua pesanan. Mitra hanya dapat mengubah status pesanan produk miliknya; mitra tetap dapat menyewa barang pihak lain, tetapi tidak barang sendiri. |
+| **Admin** | Dapat masuk, menambahkan produk CamRent ke Catalog, memantau semua pesanan, dan menggunakan alur sewa. Akun admin tidak dibuat melalui pendaftaran publik. |
 
 Pendaftaran akun biasa selalu menghasilkan role `user`. Pendaftaran dan pembaruan profil mitra dilakukan melalui satu halaman **Jadi Mitra** di `/mitra`.
 
@@ -50,7 +50,7 @@ Tombol **Sewakan Barang Saya** tersedia untuk mitra, sedangkan admin mendapat to
 
 ### Memantau akun dan meminta bantuan
 
-- **Dashboard** menampilkan riwayat sewa. Dashboard mitra juga memiliki bagian toko untuk melihat pesanan masuk dan produk sendiri.
+- **Dashboard** menampilkan riwayat sewa. Admin dan mitra memiliki tab pemantauan semua pesanan user; mitra juga memiliki tab produk sendiri dan hanya dapat mengubah status pesanan produk miliknya.
 - **Bantuan (CS)** menyediakan form pengaduan, riwayat tiket, FAQ, serta chat AI yang dapat digunakan tamu maupun pengguna.
 - Pesan validasi dan notifikasi ditampilkan sebagai toast agar pengguna memperoleh umpan balik setelah mengirim form atau melakukan tindakan.
 
@@ -63,7 +63,7 @@ Tombol **Sewakan Barang Saya** tersedia untuk mitra, sedangkan admin mendapat to
 | Specsheet pada `/marketplace` | Melihat foto, spesifikasi, harga, stok, dan penjual produk sebelum menyewa. Detail dibuka sebagai modal agar pengguna tetap berada di hasil katalog. |
 | `/keranjang` | Meninjau pilihan, stok, kuantitas, dan estimasi harga sebelum checkout. |
 | `/booking` | Menyelesaikan checkout secara bertahap dengan kalender, data penyewa, jaminan, pembayaran, dan ringkasan. |
-| `/dashboard` | Tamu melihat aktivitas sesi browser; akun melihat riwayat sewa dan profil. Mitra juga melihat pesanan masuk dan produk miliknya. |
+| `/dashboard` | Tamu melihat aktivitas sesi browser; akun melihat riwayat sewa dan profil. Admin/mitra dapat memantau semua pesanan user; mitra juga melihat produk miliknya. |
 | `/mitra` | Mendaftar sebagai mitra atau memperbarui profil mitra pada satu halaman. |
 | `/login` | Masuk atau membuat akun user. Pendaftaran publik membuat role `user`; tautan mitra mengarah ke `/mitra`. |
 | `/pengaturan-akun` | Memperbarui nama, email, nomor HP, foto profil, dan kata sandi. |
@@ -83,7 +83,7 @@ Uraian ini menjelaskan bagaimana kebutuhan pengguna diterjemahkan ke alur dan an
 | **Keranjang** (`/keranjang`) — penyewa | Memastikan barang dan jumlah unit sudah benar sebelum checkout. | Pengguna dapat memilih sebagian/semua barang, mengubah jumlah dengan kontrol tambah/kurang, atau menghapus barang. Ringkasan memperlihatkan jumlah alat, unit, dan estimasi biaya harian; batas jumlah mengikuti stok. Keadaan kosong menyediakan tautan kembali ke Catalog. |
 | **Checkout** (`/booking`) — penyewa | Menyelesaikan sewa dengan memahami tanggal, identitas, jaminan, dan biaya. | Form dibagi menjadi langkah bernomor: alat, tanggal, data penyewa, jaminan, dan pembayaran. Kalender memperlihatkan pilihan tanggal; ringkasan biaya dan metode pembayaran membantu pengguna memeriksa pesanan sebelum konfirmasi. Validasi server mencegah tanggal, stok, dan data wajib yang tidak valid. |
 | **Masuk/Daftar** (`/login`) — tamu dan pengguna | Masuk atau membuat akun dengan proses yang mudah dikenali. | Tab **Masuk** dan **Daftar Akun** memisahkan dua tugas. Label dan tipe input sesuai data yang diminta. Pendaftaran publik selalu membuat akun user; jalur menjadi mitra dipisahkan ke halaman **Jadi Mitra**. Admin masuk melalui form yang sama, bukan melalui pilihan role publik. |
-| **Dashboard** (`/dashboard`) — tamu, user, mitra, admin | Melihat status dan riwayat aktivitas yang relevan dengan akun. | Riwayat menampilkan kode, tanggal, item, biaya, dan status pesanan. Mitra mendapat tab tambahan untuk pesanan masuk dan produk sendiri; pengguna mendapat informasi profil. Tamu diberi penjelasan bahwa aktivitasnya berasal dari browser saat ini dan ajakan masuk untuk menyimpan riwayat ke akun. |
+| **Dashboard** (`/dashboard`) — tamu, user, mitra, admin | Melihat riwayat sendiri atau memantau pesanan pelanggan sesuai peran. | Riwayat menampilkan kode, tanggal, item, biaya, dan status. Admin dan mitra mendapat tab **Pantau Pesanan** untuk melihat semua pesanan; hanya mitra yang memiliki produk terkait mendapat aksi perubahan status. Mitra juga memiliki tab produk sendiri. Tamu diberi penjelasan bahwa aktivitasnya berasal dari browser saat ini dan ajakan masuk untuk menyimpan riwayat ke akun. |
 | **Jadi Mitra** (`/mitra`) — calon mitra dan mitra aktif | Mendaftar atau memperbarui data usaha tanpa mengulang proses pada halaman berbeda. | Satu halaman mengelompokkan data usaha, akun, dan data mitra. Nilai profil yang sudah ada ditampilkan kembali saat pembaruan; foto wajib saat pendaftaran dan opsional saat update. Langkah dan manfaat kemitraan dijelaskan di samping form, sementara validasi menandai data yang harus diperbaiki. |
 | **Pengaturan Akun** (`/pengaturan-akun`) — pengguna terdaftar | Memperbarui data pribadi dan keamanan akun. | Form memisahkan profil dari bagian ubah kata sandi. Foto profil memiliki batas format/ukuran; kata sandi saat ini dan konfirmasi kata sandi baru membantu menghindari perubahan yang tidak disengaja. Tombol **Kembali ke Dashboard** menyediakan jalan keluar yang jelas. |
 | **Pusat Bantuan** (`/cs`) — tamu dan pengguna | Mendapat jawaban atau menyampaikan masalah dengan konteks pesanan. | Kategori pengaduan dan pilihan pesanan membantu pengguna memberi konteks. Riwayat tiket menampilkan kode dan status; FAQ menangani pertanyaan umum, sementara chat AI dapat digunakan sebagai jalur bantuan cepat. Pengiriman tiket memerlukan login dan tiket dikaitkan dengan akun. |

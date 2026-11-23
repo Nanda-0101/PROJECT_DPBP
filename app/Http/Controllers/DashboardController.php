@@ -23,25 +23,24 @@ class DashboardController extends Controller
         $bookings = $bookingsQuery->get();
 
         $isMitra = $user?->isMitra() ?? false;
+        $canMonitorOrders = in_array($user?->role, ['mitra', 'admin'], true);
 
-        // Data khusus mitra
+        $monitoredOrders = collect();
         $myProducts = collect();
-        $myOrders   = collect();
-        if ($isMitra && $user) {
-            $myProducts = Product::with('category')
-                ->where('seller_id', $user->id)
-                ->get();
-
-            $myProductIds = $myProducts->pluck('id');
-
-            $myOrders = Booking::with(['items', 'user'])
-                ->whereHas('items', fn($q) => $q->whereIn('product_id', $myProductIds))
+        if ($canMonitorOrders) {
+            $monitoredOrders = Booking::with(['items.product', 'user'])
                 ->orderByDesc('created_at')
                 ->get();
         }
 
+        if ($isMitra) {
+            $myProducts = Product::with('category')
+                ->where('seller_id', $user->id)
+                ->get();
+        }
+
         return view('dashboard', compact(
-            'user', 'bookings', 'isMitra', 'myProducts', 'myOrders'
+            'user', 'bookings', 'isMitra', 'canMonitorOrders', 'monitoredOrders', 'myProducts'
         ));
     }
 
