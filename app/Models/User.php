@@ -58,8 +58,18 @@ class User extends Authenticatable
         return $this->role === 'mitra';
     }
 
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function canManageCatalog(): bool
+    {
+        return in_array($this->role, ['mitra', 'admin'], true);
+    }
+
     public function canRent(): bool
     {
-        return in_array($this->role, ['user', 'mitra'], true);
+        return in_array($this->role, ['user', 'mitra', 'admin'], true);
     }
 }

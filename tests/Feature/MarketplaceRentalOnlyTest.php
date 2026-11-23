@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Tests\CommerceTestCase;
 
@@ -185,28 +187,81 @@ class MarketplaceRentalOnlyTest extends CommerceTestCase
         ]);
     }
 
-    public function test_only_mitra_can_open_listing_form_or_submit_a_listing(): void
+    public function test_only_mitra_or_admin_can_open_listing_form_or_submit_a_listing(): void
     {
         $user = $this->createUser(['role' => 'user']);
         $mitra = $this->createUser(['role' => 'mitra']);
 
         $this->from(route('marketplace'))->post(route('marketplace.rent-out'))
             ->assertRedirect(route('marketplace'))
-            ->assertSessionHas('error', 'Hanya mitra yang dapat menyewakan barang.');
+            ->assertSessionHas('error', 'Hanya akun admin atau mitra yang dapat menambahkan barang.');
 
         $this->actingAs($user)->get(route('marketplace'))
             ->assertOk()
-            ->assertSee('Hanya mitra yang dapat menyewakan barang.')
+            ->assertSee('Login sebagai admin atau mitra untuk menambahkan barang ke catalog.')
             ->assertDontSee('id="modalSewakan"', false);
 
         $this->from(route('marketplace'))->actingAs($user)
             ->post(route('marketplace.rent-out'))
             ->assertRedirect(route('marketplace'))
-            ->assertSessionHas('error', 'Hanya mitra yang dapat menyewakan barang.');
+            ->assertSessionHas('error', 'Hanya akun admin atau mitra yang dapat menambahkan barang.');
 
         $this->actingAs($mitra)->get(route('marketplace'))
             ->assertOk()
             ->assertSee('id="modalSewakan"', false);
+    }
+
+    public function test_admin_can_log_in_add_camrent_catalog_products_and_rent_them(): void
+    {
+        Storage::fake('public');
+        $this->createUser([
+            'name' => 'Admin CamRent',
+            'email' => 'admin@camrent.id',
+            'password' => 'admin123',
+            'role' => 'admin',
+        ]);
+
+        $this->post(route('login.attempt'), [
+            'email' => 'admin@camrent.id',
+            'password' => 'admin123',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->get(route('marketplace'))
+            ->assertOk()
+            ->assertSee('Tambah Produk CamRent')
+            ->assertSee('id="modalSewakan"', false);
+
+        $this->post(route('marketplace.rent-out'), [
+            'name' => 'Kamera CamRent Baru',
+            'category' => 'Kamera',
+            'price_rent' => 150000,
+            'stock' => 2,
+            'photos' => [UploadedFile::fake()->createWithContent(
+                'kamera.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lS8AAAAASUVORK5CYII=')
+            )],
+        ])->assertRedirect(route('marketplace'))
+            ->assertSessionHas('success', 'Barang berhasil ditayangkan di marketplace dan siap disewa.');
+
+        $product = \App\Models\Product::where('name', 'Kamera CamRent Baru')->firstOrFail();
+        $this->assertNull($product->seller_id);
+        $this->get(route('marketplace'))
+            ->assertSee('Kamera CamRent Baru')
+            ->assertSee('CamRent');
+
+        $this->post(route('cart.add', $product))->assertRedirect();
+        $this->get(route('cart.index'))->assertSee('Kamera CamRent Baru');
+    }
+
+    public function test_admin_seeder_adds_the_account_idempotently(): void
+    {
+        Artisan::call('db:seed', ['--class' => \Database\Seeders\AdminSeeder::class]);
+        Artisan::call('db:seed', ['--class' => \Database\Seeders\AdminSeeder::class]);
+
+        $this->assertDatabaseCount('users', 1);
+        $admin = \App\Models\User::where('email', 'admin@camrent.id')->firstOrFail();
+        $this->assertSame('admin', $admin->role);
+        $this->assertTrue(Hash::check('admin123', $admin->password));
     }
 
     public function test_home_page_and_footer_do_not_mention_buying(): void

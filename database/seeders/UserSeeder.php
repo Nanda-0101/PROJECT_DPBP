@@ -10,6 +10,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(AdminSeeder::class);
+
         $user = User::create([
             'name' => 'Rangga Pratama', 'email' => 'user@camrent.id',
             'password' => 'user123', 'phone' => '081234567890',

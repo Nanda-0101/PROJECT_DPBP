@@ -108,9 +108,10 @@ class MarketplaceController extends Controller
     // ==== Sewakan barang (mitra listing) ====
     public function rentOut(Request $request)
     {
-        if (Auth::user()?->role !== 'mitra') {
+        $user = Auth::user();
+        if (!$user?->canManageCatalog()) {
             return back()
-                ->with('error', 'Hanya akun dengan role mitra yang dapat menyewakan barang.');
+                ->with('error', 'Hanya akun admin atau mitra yang dapat menambahkan barang.');
         }
 
         $request->validate([
@@ -140,7 +141,7 @@ class MarketplaceController extends Controller
         );
 
         $product = Product::create([
-            'seller_id'          => Auth::id(),
+            'seller_id'          => $user->isAdmin() ? null : $user->id,
             'category_id'        => $category->id,
             'name'               => $request->name,
             'icon'               => 'bi-box-seam',

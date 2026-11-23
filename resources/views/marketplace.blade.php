@@ -45,9 +45,9 @@
       <option value="price-desc" @selected($sort === 'price-desc')>Harga tertinggi</option>
       <option value="rating"     @selected($sort === 'rating')>Rating tertinggi</option>
     </select>
-    @if(auth()->check() && auth()->user()->role === 'mitra')
+    @if(auth()->user()?->canManageCatalog())
       <button type="button" class="btn btn-outline" onclick="document.getElementById('modalSewakan').classList.add('open')">
-        <i class="bi bi-plus-circle"></i> Sewakan Barang Saya
+        <i class="bi bi-plus-circle"></i> {{ auth()->user()->isAdmin() ? 'Tambah Produk CamRent' : 'Sewakan Barang Saya' }}
       </button>
     @else
       <button type="button" class="btn btn-outline" disabled>
@@ -55,8 +55,8 @@
       </button>
     @endif
   </form>
-  @unless(auth()->check() && auth()->user()->role === 'mitra')
-    <p class="hint" style="margin-top:8px;">Silahkan login sebagai mitra yang dapat menyewakan barang.</p>
+  @unless(auth()->user()?->canManageCatalog())
+    <p class="hint" style="margin-top:8px;">Login sebagai admin atau mitra untuk menambahkan barang ke catalog.</p>
   @endunless
 
   <div class="mp-chip-row">
@@ -104,14 +104,14 @@
 </div>
 
 {{-- MODAL: Sewakan Barang --}}
-@if(auth()->check() && auth()->user()->role === 'mitra')
+@if(auth()->user()?->canManageCatalog())
 <div class="modal-backdrop" id="modalSewakan">
   <div class="modal-box glass-strong">
     <button type="button" class="modal-close" onclick="document.getElementById('modalSewakan').classList.remove('open')">
       <i class="bi bi-x-lg"></i>
     </button>
-    <h3 style="margin-bottom:6px;"><i class="bi bi-tag gradient-text"></i> Sewakan Barang Saya</h3>
-    <p style="margin-bottom:18px;">Isi detail alat yang ingin kamu sewakan ke kreator lain.</p>
+    <h3 style="margin-bottom:6px;"><i class="bi bi-tag gradient-text"></i> {{ auth()->user()->isAdmin() ? 'Tambah Produk CamRent' : 'Sewakan Barang Saya' }}</h3>
+    <p style="margin-bottom:18px;">Isi detail alat yang ingin ditambahkan ke catalog.</p>
     <form method="POST" action="{{ route('marketplace.rent-out') }}" enctype="multipart/form-data">
       @csrf
       <div class="field"><label>Nama barang</label><input required name="name" class="input" placeholder="Contoh: Nikon Z6 II"></div>
@@ -133,7 +133,7 @@
         <div class="hint"><i class="bi bi-info-circle"></i> Unggah minimal 1 foto asli.</div>
       </div>
       <button type="submit" class="btn btn-primary btn-block">
-        <i class="bi bi-upload"></i> Tayangkan untuk Disewa
+        <i class="bi bi-upload"></i> {{ auth()->user()->isAdmin() ? 'Tambah ke Catalog' : 'Tayangkan untuk Disewa' }}
       </button>
     </form>
   </div>

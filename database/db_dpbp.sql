@@ -171,7 +171,7 @@ INSERT INTO `order_items` (`id`, `booking_id`, `product_id`, `product_name_snap`
 
 CREATE TABLE `products` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `seller_id` bigint(20) UNSIGNED NOT NULL,
+  `seller_id` bigint(20) UNSIGNED DEFAULT NULL,
   `category_id` int(10) UNSIGNED NOT NULL,
   `name` varchar(150) NOT NULL,
   `brand` varchar(80) DEFAULT NULL,
@@ -312,7 +312,8 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `role`, `status
 (3, 'Caca', 'caca@gmail.com', '123456', '081311122233', 'user', 'Aktif', NULL, '2026-09-18 06:41:36', '2026-10-11 13:46:50'),
 (4, 'dimas', 'dimas@gmail.com', '$2y$12$KK6a..MVgfTlHq9KGhDZqevTlMyOrNSI.beGE8BT/F/mlzhy9svQi', '081232211122', 'user', 'Aktif', NULL, '2026-10-11 06:30:48', '2026-10-11 06:30:48'),
 (5, 'SD', 'guest+d603cf98-6ddb-4403-939b-2c84b6f1b06d@camrent.invalid', '$2y$12$JkTAHTLDp9Xh7a/WTPNuK.8AERS8vzHWpOvFk0ZB2NqH4u.rld97e', '009090909', 'user', 'Aktif', NULL, '2026-10-11 06:36:33', '2026-10-11 06:36:33'),
-(6, 'ww', 'guest+4833c55e-5b13-4a4d-bfe5-eb2685805c18@camrent.invalid', '$2y$12$ku2zT3GUzGIVsXSuGNSJ6ebkUzzPVx0YtJx3hQVqm/isxGX.9.bOO', '232323', 'user', 'Aktif', NULL, '2026-10-11 06:37:21', '2026-10-11 06:37:21');
+(6, 'ww', 'guest+4833c55e-5b13-4a4d-bfe5-eb2685805c18@camrent.invalid', '$2y$12$ku2zT3GUzGIVsXSuGNSJ6ebkUzzPVx0YtJx3hQVqm/isxGX.9.bOO', '232323', 'user', 'Aktif', NULL, '2026-10-11 06:37:21', '2026-10-11 06:37:21'),
+(7, 'Admin CamRent', 'admin@camrent.id', '$2y$12$/rRi6/r/y1VAwFR1.F6eEuTUzjOy/htnWw6mGMIX7Ji6chREybV9K', '081200000000', 'admin', 'Aktif', NULL, '2026-11-23 03:20:00', '2026-11-23 03:20:00');
 
 --
 -- Indexes for dumped tables
